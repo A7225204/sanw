@@ -265,7 +265,10 @@ data/              SQLite + 缓存
 
 [MIT](LICENSE)
 
-基于 [chennianlaobai/qq-ai-bot](https://github.com/chennianlaobai/qq-ai-bot) 改进。
+Copyright © 2026 [chennianlaobai](https://github.com/chennianlaobai/qq-ai-bot)（原版）
+Copyright © 2026 [A7225204](https://github.com/A7225204)（本版改进）
+
+随便用、随便改、随便商用。改了不用告诉我，但**别把原作者的署名删掉**（MIT 的要求）。
 
 ---
 
