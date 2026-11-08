@@ -42,3 +42,10 @@ bili_qr.png
 .vscode/
 .idea/
 .DS_Store
+
+# ── 大文件（>50MB 会让 clone 变慢，走 Release 或外部下载）──
+*.gltf
+*.glb
+*.fbx
+*.vrma
+dashboard-web/public/models/
