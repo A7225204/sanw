@@ -1,0 +1,226 @@
+{
+ "39": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen_3_4b.safetensors",
+   "type": "lumina2",
+   "device": "default"
+  }
+ },
+ "40": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "diffusion_pytorch_model.safetensors"
+  }
+ },
+ "42": {
+  "class_type": "ConditioningZeroOut",
+  "inputs": {
+   "conditioning": [
+    "45",
+    0
+   ]
+  }
+ },
+ "46": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "z_image_turbo_bf16.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "41": {
+  "class_type": "EmptySD3LatentImage",
+  "inputs": {
+   "width": 1024,
+   "height": 1024,
+   "batch_size": 1
+  }
+ },
+ "9": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "z-image",
+   "images": [
+    "43",
+    0
+   ]
+  }
+ },
+ "43": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "66",
+    0
+   ],
+   "vae": [
+    "40",
+    0
+   ]
+  }
+ },
+ "47": {
+  "class_type": "ModelSamplingAuraFlow",
+  "inputs": {
+   "shift": 3,
+   "model": [
+    "54",
+    0
+   ]
+  }
+ },
+ "45": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": [
+    "55",
+    0
+   ],
+   "clip": [
+    "39",
+    0
+   ]
+  }
+ },
+ "50": {
+  "class_type": "Florence2Run",
+  "inputs": {
+   "text_input": "",
+   "task": "more_detailed_caption",
+   "fill_mask": true,
+   "keep_model_loaded": false,
+   "max_new_tokens": 1024,
+   "num_beams": 3,
+   "do_sample": true,
+   "output_mask_select": "",
+   "seed": 988898175564958,
+   "image": [
+    "59",
+    0
+   ],
+   "florence2_model": [
+    "51",
+    0
+   ]
+  }
+ },
+ "51": {
+  "class_type": "Florence2ModelLoader",
+  "inputs": {
+   "model": "Florence-2-base",
+   "precision": "fp16",
+   "convert_to_safetensors": "sdpa"
+  }
+ },
+ "53": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "lora_name": "Zimage_胸部优化_v1_v1.safetensors",
+   "strength_model": 0.8,
+   "model": [
+    "46",
+    0
+   ]
+  }
+ },
+ "54": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "lora_name": "Z-Image——哈苏人像滤镜_Z-Image——哈苏人像滤镜.safetensors",
+   "strength_model": 0.6,
+   "model": [
+    "53",
+    0
+   ]
+  }
+ },
+ "55": {
+  "class_type": "ShowText|pysssss",
+  "inputs": {
+   "text": [
+    "50",
+    2
+   ]
+  }
+ },
+ "59": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "01BFCA956BCCAFD230C7177473C177F8.jpg"
+  }
+ },
+ "61": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "59",
+    0
+   ],
+   "vae": [
+    "40",
+    0
+   ]
+  }
+ },
+ "65": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "add_noise": "enable",
+   "noise_seed": 1121489231657508,
+   "steps": "randomize",
+   "cfg": 10,
+   "sampler_name": 1,
+   "scheduler": "dpmpp_3m_sde",
+   "start_at_step": "ddim_uniform",
+   "end_at_step": 0,
+   "return_with_leftover_noise": 1,
+   "model": [
+    "47",
+    0
+   ],
+   "positive": [
+    "45",
+    0
+   ],
+   "negative": [
+    "42",
+    0
+   ],
+   "latent_image": [
+    "41",
+    0
+   ]
+  }
+ },
+ "66": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "add_noise": "enable",
+   "noise_seed": 27882403628606,
+   "steps": "randomize",
+   "cfg": 10,
+   "sampler_name": 1,
+   "scheduler": "euler",
+   "start_at_step": "simple",
+   "end_at_step": 1,
+   "return_with_leftover_noise": 10,
+   "model": [
+    "47",
+    0
+   ],
+   "positive": [
+    "45",
+    0
+   ],
+   "negative": [
+    "42",
+    0
+   ],
+   "latent_image": [
+    "65",
+    0
+   ]
+  }
+ }
+}

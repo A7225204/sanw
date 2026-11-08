@@ -1,0 +1,24 @@
+{
+  "1": {
+    "class_type": "AILab_QwenVL",
+    "inputs": {
+      "model_name": "Qwen3-VL-2B-Instruct",
+      "quantization": "None (FP16)",
+      "attention_mode": "auto",
+      "preset_prompt": "🖼️ Detailed Description",
+      "custom_prompt": "请用中文简洁回答。",
+      "max_tokens": 512,
+      "keep_model_loaded": true,
+      "seed": 1
+    }
+  },
+  "2": {
+    "class_type": "SaveStringKJ",
+    "inputs": {
+      "string": ["1", 0],
+      "filename_prefix": "qwen_text",
+      "output_folder": "qwen_text",
+      "file_extension": ".txt"
+    }
+  }
+}

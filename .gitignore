@@ -1,0 +1,44 @@
+# ── 敏感：真实密钥绝不进版本库 ──
+.env
+.env.*
+!.env.example
+
+# ── 运行时数据：你的聊天记录 / 记忆 / 日志 ──
+memory/
+logs/
+data/
+output/
+outbox/
+backups/
+jobs/
+
+# ── 个人内容：日记 / 素材 ──
+日记/
+歌曲/
+表情包/
+B站视频/
+_whale_stage/
+doubao-images/
+docs/screenshots-*/
+
+# ── 真实人设（每个人不一样，从 example 复制）──
+persona.md
+
+# ── 环境 / 缓存 ──
+.venv/
+__pycache__/
+*.py[cod]
+node_modules/
+dashboard/webapp/
+dashboard/webapp.bak_*/
+dashboard/assets/pet/
+
+# ── B 站登录态 / 限频 ──
+.bili_cookies.json
+.bili_limits.json
+bili_qr.png
+
+# ── 编辑器 ──
+.vscode/
+.idea/
+.DS_Store

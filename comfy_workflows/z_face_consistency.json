@@ -1,0 +1,165 @@
+{
+ "9": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "filename_prefix": "z-image",
+   "images": [
+    "43",
+    0
+   ]
+  }
+ },
+ "39": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen_3_4b.safetensors",
+   "type": "lumina2",
+   "device": "default"
+  }
+ },
+ "40": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "diffusion_pytorch_model.safetensors"
+  }
+ },
+ "41": {
+  "class_type": "EmptySD3LatentImage",
+  "inputs": {
+   "width": 1024,
+   "height": 1024,
+   "batch_size": 1
+  }
+ },
+ "42": {
+  "class_type": "ConditioningZeroOut",
+  "inputs": {
+   "conditioning": [
+    "45",
+    0
+   ]
+  }
+ },
+ "43": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "66",
+    0
+   ],
+   "vae": [
+    "40",
+    0
+   ]
+  }
+ },
+ "45": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "PROMPT_HERE",
+   "clip": [
+    "39",
+    0
+   ]
+  }
+ },
+ "46": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "z_image_turbo_bf16.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "47": {
+  "class_type": "ModelSamplingAuraFlow",
+  "inputs": {
+   "shift": 3,
+   "model": [
+    "54",
+    0
+   ]
+  }
+ },
+ "53": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "lora_name": "Zimage_胸部优化_v1_v1.safetensors",
+   "strength_model": 0.8,
+   "model": [
+    "46",
+    0
+   ]
+  }
+ },
+ "54": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "lora_name": "Z-Image——哈苏人像滤镜_Z-Image——哈苏人像滤镜.safetensors",
+   "strength_model": 0.6,
+   "model": [
+    "53",
+    0
+   ]
+  }
+ },
+ "65": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "add_noise": "enable",
+   "noise_seed": 1235746802,
+   "steps": 10,
+   "cfg": 1,
+   "sampler_name": "dpmpp_3m_sde",
+   "scheduler": "ddim_uniform",
+   "start_at_step": 0,
+   "end_at_step": 1,
+   "return_with_leftover_noise": "disable",
+   "model": [
+    "47",
+    0
+   ],
+   "positive": [
+    "45",
+    0
+   ],
+   "negative": [
+    "42",
+    0
+   ],
+   "latent_image": [
+    "41",
+    0
+   ]
+  }
+ },
+ "66": {
+  "class_type": "KSamplerAdvanced",
+  "inputs": {
+   "add_noise": "enable",
+   "noise_seed": 2092308735,
+   "steps": 10,
+   "cfg": 1,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "start_at_step": 1,
+   "end_at_step": 10,
+   "return_with_leftover_noise": "disable",
+   "model": [
+    "47",
+    0
+   ],
+   "positive": [
+    "45",
+    0
+   ],
+   "negative": [
+    "42",
+    0
+   ],
+   "latent_image": [
+    "65",
+    0
+   ]
+  }
+ }
+}
