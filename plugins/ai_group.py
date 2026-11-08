@@ -10004,8 +10004,18 @@ async def _(event: PrivateMessageEvent):
                         f"(*搬小板凳*) 这是 {_total} 集合集，我一口气看 3 集，"
                         "大概要几分钟…")
                 _r = await _bd.watch(_url, by="owner", count=_cnt)
-                _bili_reply = (f"🎬 {_r.get('title') or '这条'}\n\n{_r.get('summary')}\n\n"
-                               f"（主人点看，不占今日 {_r.get('limit')} 条额度）")
+                # 评论：watch() 里已经发过了（by=owner 会评第一集），这里只把结果带出来
+                _cmt = ""
+                try:
+                    _eps = _r.get("episodes") or []
+                    _c0 = (_eps[0].get("comment") if _eps else None) or ""
+                    if _c0:
+                        # 2026-11-08：评论被阿瓦隆静默吞过（17:49 那条），别装作发过了
+                        _cmt = (chr(10) + chr(10) + f"💬 我在评论区留了一句：{_c0}"
+                                + chr(10) + "（45 秒后我回查一次，被吞了就换个说法重发；还被吞会单独告诉你）")
+                except Exception:  # noqa: BLE001
+                    pass
+                _bili_reply = ("🎬 " + str(_r.get("title") or "这条") + chr(10) + chr(10) + str(_r.get("summary")) + chr(10) + chr(10) + "（主人点看，不占今日 " + str(_r.get("limit")) + " 条额度）" + _cmt)
         except Exception as e:  # noqa: BLE001
             # 注意：这里不能碰 finish，否则会被 finish 抛的 FinishedException 再抓一次
             _bili_reply = f"(*耷拉尾巴*) 没看完：{type(e).__name__}: {str(e)[:80]}"

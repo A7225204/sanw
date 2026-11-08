@@ -176,6 +176,18 @@ def mark_silent(bvid: str, text: str, deleted: bool) -> None:
         logger.warning(f"[B站账号] 评论被静默删除（阿瓦隆）：{str(text)[:40]}")
 
 
+async def _notify_owner(text: str) -> None:
+    """报备主人：评论被吞这种事她自己看不见，得让主人知道。失败只记 debug。"""
+    try:
+        bot = nonebot.get_bot()
+    except Exception:  # noqa: BLE001
+        return
+    try:
+        await bot.send_private_msg(user_id=int(OWNER_QQ_ID), message=text)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug(f"[B站账号] 报备主人失败：{type(exc).__name__}: {exc}")
+
+
 def check_limit(target_bvid: str, day_key: str, kind: str = "") -> str | None:
     """返回 None 表示可发，否则返回拒绝原因。
 
@@ -357,16 +369,64 @@ class BiliClient:
             pass
         return int(rpid)
 
-    async def _verify_comment_later(self, aid: int, rpid: int, bvid: str, text: str) -> None:
-        """发完评论 45 秒回查：还在就是正常，看不见就是被阿瓦隆静默删了。"""
+    async def comment_exists(self, aid: int, rpid: int) -> bool | None:
+        """这条评论还在不在：True 在 / False 没了 / None 查不动（网络问题，别当被吞）。
+
+        2026-11-08：原来只读单页 30 条，热门视频上会被新评论挤掉，误判成"被吞"；
+        现在两页各 20 条（按时间倒序）再判断，列表拉不到就返回 None。
+        """
+        for pn in (1, 2):
+            try:
+                async with httpx.AsyncClient(timeout=15.0, headers=_headers(), cookies=self.cookies) as client:
+                    resp = await client.get(
+                        "https://api.bilibili.com/x/v2/reply",
+                        params={"type": 1, "oid": aid, "sort": 0, "ps": 20, "pn": pn},
+                    )
+                    payload = resp.json()
+            except Exception as e:  # noqa: BLE001
+                logger.debug(f"[B站账号] 回查评论列表失败（pn={pn}）：{type(e).__name__}: {e}")
+                return None
+            if payload.get("code") != 0:
+                return None
+            replies = (payload.get("data") or {}).get("replies") or []
+            if any(int(r.get("rpid") or 0) == int(rpid) for r in replies):
+                return True
+            if len(replies) < 20:
+                break
+        return False
+
+    async def _verify_comment_later(self, aid: int, rpid: int, bvid: str, text: str,
+                                    allow_retry: bool = True) -> None:
+        """发完评论 45 秒回查：还在就是正常，看不见就是被阿瓦隆静默吞了。
+
+        2026-11-08（主人：发了链接她看完也要评论）：以前被吞只记一笔，
+        主人那边看不到评论、她自己以为发出去了。现在被吞就换一句更保险的**重发一次**，
+        再回查；还是被吞就报备主人，不装作发过了。
+        """
         await asyncio.sleep(SILENT_CHECK_DELAY)
-        try:
-            rows = await self.comments(aid, 30)
-        except Exception as e:  # noqa: BLE001
-            logger.debug(f"[B站账号] 回查评论失败：{type(e).__name__}: {e}")
-            return
-        alive = any(int(r.get("rpid") or 0) == int(rpid) for r in rows)
+        alive = await self.comment_exists(aid, rpid)
+        if alive is None:
+            return                    # 查不动：不算被吞也不算活着，别记假账
         mark_silent(bvid, text, not alive)
+        if alive:
+            return
+        logger.warning(f"[B站账号] 评论被吞：{str(text)[:40]}")
+        if not allow_retry:
+            await _notify_owner(f"🐟 这条又换了个说法重发，还是被 B站 吞了：{bvid}\n先不硬发了，免得账号被盯上。")
+            return
+        if silent_cooldown_left() > 0:
+            return                    # 正在冷却，别顶着风控再发
+        alt = await _gen_safer_comment(bvid)
+        if not alt:
+            return
+        try:
+            rpid2 = await self.post_comment(aid, bvid, alt)
+        except BiliAccountError as e:
+            logger.warning(f"[B站账号] 重发评论失败：{e}")
+            return
+        record_action(bvid, "auto_comment", alt)
+        logger.info(f"[B站账号] 被吞后重发：{alt[:40]}")
+        await self._verify_comment_later(aid, rpid2, bvid, alt, allow_retry=False)
 
     async def delete_comment(self, oid: int, rpid: int) -> bool:
         """删自己发过的评论（rpid 来自 post_comment）。"""
@@ -433,6 +493,37 @@ async def auto_comment(bvid: str, title: str = "", desc: str = "", dry: bool = F
     except Exception as e:  # noqa: BLE001
         logger.warning(f"[B站评论] 失败：{type(e).__name__}: {e}")
         return None
+
+
+async def _gen_safer_comment(bvid: str, title: str = "") -> str | None:
+    """被吞之后重发用的保险版：更短、更平，只谈视频里具体的一点。
+
+    第一句常栽在"夸得太用力 / 评价 UP 主 / 抖机灵"上，被阿瓦隆当成模板。
+    """
+    t = (title or "").strip()
+    if not t:
+        try:
+            info = await bili.video_info(bvid)
+            t = str(info.get("title") or "")
+        except Exception:  # noqa: BLE001
+            t = ""
+    try:
+        msg = await generate_text(
+            "你刚看完这个视频，想留一句话。上一句被平台吞了，这次换个更平淡的写法："
+            "就事论事，只谈视频里具体的一点；不夸 UP 主、不评价观众、不抖机灵。",
+            f"视频标题：{t or '（不知道标题）'}\n"
+            "写 30 字以内，像真人随口一句；别引战、别广告、别发链接、别自我介绍。",
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"[B站评论] 重发生成失败：{type(e).__name__}: {e}")
+        return None
+    msg = (msg or "").strip()
+    if not msg or msg in recent_texts():
+        return None
+    bad = [w for w in ("傻", "滚", "垃圾", "废物", "闭嘴", "脑残", "弱智", "尼玛", "草", "妈的", "恶心") if w in msg]
+    if bad:
+        return None
+    return msg
 
 
 # ------------------------------------------------------------------ AI 文案
