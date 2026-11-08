@@ -267,7 +267,88 @@ def tick(minutes: float | None = None) -> dict:
         _ticking = False
 
 
-def apply_event(name: str, scale: float = 1.0) -> dict:
+def appraise(name: str, ctx: dict | None = None) -> dict:
+    """OCC 式认知评价（2026-11-08 移植自 BioCore 的思路）。
+
+    事件不再直接改激素，先过四维评价：
+      relevance  相关性  —— 这事跟我有关吗（0~1）
+      valence    利害    —— 好还是坏（0=坏 1=好）
+      coping     应对    —— 我扛得住吗（0~1，由血清素/多巴胺/皮质醇推）
+      agency     归因    —— 怪自己还是怪外面（0=自己 1=外部）
+
+    评价结果用来修正激素变化量：
+      · 相关性低 → 效果打折（别人的事，跟我没关系）
+      · 坏事件 + 能应对 → 伤害减半；坏事件 + 扛不住 → 伤害加剧
+    """
+    ctx = ctx or {}
+    base = EVENTS.get(name) or (0, 0, 0, 0, 0)
+    total = float(sum(base))
+
+    # 相关性：直接冲着她来的最高，群聊闲话最低
+    if name in {"owner_message", "praise", "insult", "intimate", "aroused", "repair"}:
+        rel = 1.0
+    elif name in {"group_interact", "meal", "coffee"}:
+        rel = 0.55
+    else:
+        rel = 0.75
+
+    # 利害：看「正向三维」和「皮质醇」的方向，不能只看总和
+    # （insult 的 CORT +12 会把总和顶成正数，但它显然是坏事）
+    pos = float(base[0]) + float(base[2]) + float(base[3])   # DA + SER + OXY
+    cort_up = float(base[1]) > 0
+    if cort_up and pos <= 0:
+        val = 0.15                       # 纯坏事
+    elif cort_up and pos > 0:
+        val = 0.35                       # 又疼又有点爽（aroused）
+    elif pos > 0:
+        val = min(1.0, 0.55 + pos / 30.0)  # 好事
+    else:
+        val = 0.45
+
+    # 应对：扛得住的能力，由当前状态推
+    coping = ctx.get("coping")
+    if coping is None:
+        try:
+            st = _load()
+            coping = (
+                float(st.get("SER", 50.0)) * 0.45
+                + float(st.get("DA", 50.0)) * 0.25
+                + (100.0 - float(st.get("CORT", 20.0))) * 0.30
+            ) / 100.0
+        except Exception:  # noqa: BLE001
+            coping = 0.6
+
+    # 归因：被骂/被修好是外部事件，闲聊是中性
+    agency = ctx.get("agency")
+    if agency is None:
+        agency = 1.0 if name in {"insult", "repair", "praise"} else 0.5
+
+    return {
+        "relevance": rel,
+        "valence": val,
+        "coping": max(0.0, min(1.0, float(coping))),
+        "agency": float(agency),
+    }
+
+
+def _appraisal_scale(name: str, base_scale: float, ctx: dict | None) -> float:
+    """把评价结果折进 scale（不改 EVENTS 表本身）。"""
+    ap = appraise(name, ctx)
+    delta = EVENTS.get(name) or (0, 0, 0, 0, 0)
+    pos = float(delta[0]) + float(delta[2]) + float(delta[3])
+    cort_up = float(delta[1]) > 0
+    is_bad = (cort_up and pos <= 0)
+    sc = base_scale * (0.45 + 0.55 * ap["relevance"])
+    if is_bad:
+        # 坏事件：能应对就少疼一点，扛不住就更疼
+        sc *= (1.35 - 0.70 * ap["coping"])
+    elif pos > 0:
+        # 好事：相关性已经折过，这里只做轻微加权
+        sc *= (0.85 + 0.30 * ap["valence"])
+    return max(0.05, min(3.0, sc))
+
+
+def apply_event(name: str, scale: float = 1.0, ctx: dict | None = None) -> dict:
     """事件一次性改变激素（会先补算 tick，保证顺序正确）。
 
     正向增益叠三道闸（参考 fish_heart 的养成节奏）：
@@ -287,6 +368,8 @@ def apply_event(name: str, scale: float = 1.0) -> dict:
         pass
     tick()
     s = _load()
+    # 2026-11-08：先过认知评价，再改激素（BioCore 那套 appraisal）
+    scale = _appraisal_scale(name, scale, ctx)
     delta = EVENTS.get(name)
     if delta:
         now = _now()
@@ -318,6 +401,29 @@ def apply_event(name: str, scale: float = 1.0) -> dict:
         lst.append(now)
         _heat[name] = lst
         _save()
+    return {k: s[k] for k in HORMONES}
+
+
+def nudge(deltas: dict) -> dict:
+    """小幅度直接改激素（2026-11-08，供"再激活"用）。
+
+    和 apply_event 的区别：
+      · 不过热度折扣、不吃每日额度（这是"想起来"，不是"发生了"）
+      · 每个维度强制封顶 ±1.2，防止每轮召回把激素顶满
+    """
+    if not ENABLED:
+        return dict(_load())
+    if not deltas:
+        return dict(_load())
+    tick()
+    s = _load()
+    for k in HORMONES:
+        d = float(deltas.get(k) or 0.0)
+        if not d:
+            continue
+        d = max(-1.2, min(1.2, d))
+        s[k] = _clamp(float(s[k]) + d)
+    _save()
     return {k: s[k] for k in HORMONES}
 
 

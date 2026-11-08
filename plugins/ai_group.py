@@ -2351,12 +2351,32 @@ def relation_update(user_id: str, scope: str, neg_add: int = 0, ignore_minutes: 
     ent.setdefault("last", now)
     ent.setdefault("ignore_until", 0)
     ent.setdefault("base_tag", "")
+    # 2026-11-08（移植 BioCore 的冲突/修复轨迹）：
+    #   conflict  攒过多少次冲突（衰减慢，是"这个人跟我吵过几回"）
+    #   repair    修好过多少次（neg 从高位自然落回低位就记一次）
+    #   peak      冲突时的最高 neg（判断"这次吵得多凶"）
+    ent.setdefault("conflict", 0)
+    ent.setdefault("repair", 0)
+    ent.setdefault("peak", 0.0)
 
     hours = max(0.0, (now - float(ent.get("last") or now)) / 3600.0)
-    ent["neg"] = max(0.0, float(ent["neg"]) - hours * 4.0)
+    prev_neg = float(ent.get("neg") or 0.0)
+    # 修复加成：修补过的关系，负面回落更快（1.0 → 1.6 倍速）
+    _rep_factor = 1.0 + min(0.6, float(ent.get("repair") or 0) * 0.15)
+    ent["neg"] = max(0.0, prev_neg - hours * 4.0 * _rep_factor)
+    # 自然修复：从 >=30 落到 <20，记一次修复
+    if prev_neg >= 30.0 and float(ent["neg"]) < 20.0:
+        ent["repair"] = int(ent.get("repair") or 0) + 1
+        ent["peak"] = 0.0
+        logger.info(f"[关系] {uid} 修复 +1（neg {prev_neg:.0f} -> {ent['neg']:.0f}）")
     ent["last"] = now
     if neg_add:
         ent["neg"] = min(100.0, float(ent["neg"]) + neg_add)
+        # 冲突计数：一次加 >=8 才算"吵了一架"，普通的烦不算
+        if neg_add >= 8:
+            ent["conflict"] = int(ent.get("conflict") or 0) + 1
+            ent["peak"] = max(float(ent.get("peak") or 0.0), float(ent["neg"]))
+            logger.info(f"[关系] {uid} 冲突 +1（neg={ent['neg']:.0f} peak={ent['peak']:.0f}）")
     if ignore_minutes:
         ent["ignore_until"] = max(float(ent.get("ignore_until") or 0), now + ignore_minutes * 60)
 
@@ -3281,8 +3301,9 @@ def _growth_snippet() -> str:
     rows = [x for x in (data.get("items") or []) if x.get("status") == "solidified"]
     if not rows:
         return ""
+    # 2026-11-08：12 → 20（按证据固化后 solid 有 15 条，[:12] 会把后 3 条挡在门外）
     return "【最近的成长】\n" + "\n".join(
-        f"- {r.get('trait')}：{r.get('value')}" for r in rows[:12]
+        f"- {r.get('trait')}：{r.get('value')}" for r in rows[:20]
     )
 
 
@@ -3304,6 +3325,14 @@ def build_volatile_block(gid, user_id, is_insulted, is_creep, is_threat,
     if not is_private and tag:
         who += f"「{tag}」"
     who += f"|性别:{sex_token(sex, is_private)}|好感{affinity}|关系:{relationship_token(gid, user_id, affinity, tag)}"
+    # 2026-11-08：说话方式画像（学"怎么说"，不是学"说什么"）。放 volatile 块，不进缓存前缀。
+    try:
+        from plugins import speech_style as _ss
+        _st = _ss.brief(user_id, "主人" if is_private else "这个人")
+        if _st:
+            who += chr(10) + _st
+    except Exception:  # noqa: BLE001
+        pass
 
     lines = [
         "\n\n【当前状态与记忆】",
@@ -3677,6 +3706,7 @@ def build_prompt_parts(gid, user_id, is_insulted=False, is_creep=False, is_threa
     except Exception:
         related_prompt = ""
     try:
+        learn_related_prompt = ""   # 2026-11-08：每轮变的部分单独拎出去，别污染 learn 块
         learn_prompt = ltm.archive_text(
             "global_learn",
             "【本鱼自学知识】以下是你自己上网学到的公开常识 / 热点。\n"
@@ -3693,8 +3723,11 @@ def build_prompt_parts(gid, user_id, is_insulted=False, is_creep=False, is_threa
         try:
             _gl_rel = ltm.archive_related("global_learn", user_text, 3)
             if _gl_rel:
-                learn_prompt += (
-                    chr(10) + chr(10) + "【本次相关的自学知识】下面这几条和这句话对得上：" + chr(10)
+                # 2026-11-08（A 方案）：原来拼进 learn_prompt，导致 learn 块每轮都变、
+                # 连带 archive/lexicon 一起掉出缓存（实测 learn=bc52516f→2398a822→984be895）。
+                # 现在单独成块，挂到 _extra 最末尾 —— 它变只影响它自己。
+                learn_related_prompt = (
+                    "【本次相关的自学知识】下面这几条和这句话对得上：" + chr(10)
                     + _gl_rel + chr(10)
                     + "· 只有主人问到这件事、或话题正好落在上面，才说一句具体的；没问到就当它不存在，"
                       "别主动提、别插话显摆 —— 主人要的是正常聊天，不是听你背资料。"
@@ -3703,6 +3736,7 @@ def build_prompt_parts(gid, user_id, is_insulted=False, is_creep=False, is_threa
             pass
     except Exception:
         learn_prompt = ""
+        learn_related_prompt = ""
     try:
         douyin_prompt = ltm.archive_text(
             "douyin",
@@ -3939,6 +3973,13 @@ def build_prompt_parts(gid, user_id, is_insulted=False, is_creep=False, is_threa
     # 语义召回块（每轮按查话变）放最前：它变化不影响前面的历史缓存
     if related_prompt:
         _extra.append(related_prompt)
+    # 2026-11-08（A 方案）：本次相关的自学知识从 learn 块里拆出来，放最前面（和 related 同级）。
+    # 它每轮都变，放最前意味着"它变了不牵连后面的任何块"。
+    try:
+        if learn_related_prompt:
+            _extra.append(learn_related_prompt)
+    except NameError:
+        pass
     # 人格内核：灵魂聚合产出，每天 3:10 变一次 —— 最慢，放最前
     try:
         from server import soul_aggregation as _sa
@@ -8678,7 +8719,7 @@ def _bili_materials() -> str:
         solid = [x for x in (g.get("items") or []) if x.get("status") == "solidified"]
         if solid:
             parts.append("【她最近的变化】" + chr(10)
-                         + chr(10).join(f"- {x.get('trait')}：{x.get('value')}" for x in solid[:6]))
+                         + chr(10).join(f"- {x.get('trait')}：{x.get('value')}" for x in solid[:12]))
     except Exception:  # noqa: BLE001
         pass
     # 4) 昨夜梦
@@ -8924,6 +8965,12 @@ async def _(event: GroupMessageEvent):
     if not text and not any(seg.type == "image" for seg in event.get_message()): return
 
     # 内分泌：群互动微小变化；创伤线索命中则抬皮质醇并记录
+    # 2026-11-08：说话方式画像（群聊也学，黑名单群已在上面的 is_allowed 里挡掉）
+    try:
+        from plugins import speech_style as _ss3
+        _ss3.observe(str(event.user_id), text)
+    except Exception:  # noqa: BLE001
+        pass
     _hormone_event("group_interact")
     if text:
         _trauma_check(gid, str(event.user_id), text, str(nickname), aimed=_aimed_at_me(event, text))
@@ -9346,13 +9393,14 @@ async def _watch_together_loop(uid: str, cli: Path, wt: Path) -> None:
             continue
 
 
-    # 👇 1.84 陪看：/陪看 —— 跟着主人正在放的视频走（dsh-watch-together）
-    # 2026-11-08：主人要求「QQ 发 /陪看 就启动」。走它的 CLI（node bin/watch.mjs），
-    # 不依赖 DSH 会话：bot 自己 subprocess 调，拿当前段的分镜 + 台词发到 QQ。
-    logger.info(f"[陪看探测] uid={user_id} msg={user_msg[:20]!r} 到达=/陪看分支前")
-
 @private_ai.handle()
 async def _(event: PrivateMessageEvent):
+    # 说话方式画像：每条消息喂一次（纯统计，不调模型）
+    try:
+        from plugins import speech_style as _ss2
+        _ss2.observe(str(event.user_id), str(event.get_plaintext() or ""))
+    except Exception:  # noqa: BLE001
+        pass
     user_id = str(event.user_id)
     gid = f"private_{user_id}"
     if str(user_id) == str(YOUR_QQ_ID):
@@ -9393,6 +9441,171 @@ async def _(event: PrivateMessageEvent):
     PRIVATE_COOLDOWN[gid] = time.time()
 
     user_msg = event.get_plaintext().strip()
+    # 2026-11-08 授权模式：/观察 看「她本来想说什么」，/授权 切换（observe 是默认）
+    if user_msg in ("/观察", "／观察"):
+        try:
+            import json as _oj
+            from plugins import agency as _ob
+            _fp = _ob._WOULD_FILE
+            _rows = _fp.read_text(encoding="utf-8").splitlines()[-10:] if _fp.exists() else []
+            if not _rows:
+                await private_ai.finish(f"还没记录过。（现在模式：{_ob.accept_mode()}）")
+            else:
+                _out = [f"现在模式：{_ob.accept_mode()}", "她本来想说的（最近 10 条）："]
+                for _r in _rows:
+                    _d = _oj.loads(_r)
+                    _out.append(f"  {_d['ts'][5:16]}  {_d['text'][:50]}")
+                await private_ai.finish(chr(10).join(_out))
+        except Exception as _e:  # noqa: BLE001
+            await private_ai.finish(f"读记录失败：{type(_e).__name__}: {_e}")
+        return
+
+    if user_msg.startswith(("/授权", "／授权")):
+        try:
+            from plugins import agency as _ob
+            _arg = user_msg.split(None, 1)[1].strip() if len(user_msg.split(None, 1)) > 1 else ""
+            if not _arg:
+                await private_ai.finish(f"现在模式：{_ob.accept_mode()}\n用法：/授权 auto（真发）| observe（只记）| off（不主动）")
+            elif _ob.set_accept_mode(_arg):
+                await private_ai.finish(f"已切到 {_arg}")
+            else:
+                await private_ai.finish("只认 auto / observe / off")
+        except Exception as _e:  # noqa: BLE001
+            await private_ai.finish(f"切换失败：{type(_e).__name__}")
+        return
+
+    # 👇 1.84 陪看：/陪看 看当前这一段（出图 + 台词 + 写记忆），/陪看停 清状态
+    # 2026-11-08：一次性版。常驻循环因线程池问题停用（见手册 G.144 坑②）。
+    # 重点：**必须写记忆** —— 不然明天她不知道昨天一起看了什么。
+    if re.match(r"^/?\s*陪看\s*停", user_msg or ""):
+        if str(user_id) != YOUR_QQ_ID:
+            await private_ai.finish("(*护住屏幕*) 只有主人能关。")
+            return
+        WATCH_TOGETHER_TASK.pop(str(user_id), None)
+        await private_ai.finish("(*收起小板凳*) 不看了，腰疼。")
+        return
+
+    if re.match(r"^/?\s*陪看\s*$", user_msg or ""):
+        if str(user_id) != YOUR_QQ_ID:
+            await private_ai.finish("(*护住屏幕*) 陪看只陪主人。")
+            return
+        _wt2 = Path(os.getenv("WATCH_TOGETHER_DIR")
+                    or (Path.home() / ".dsh" / "profiles" / "web" / "node_modules" / "dsh-watch-together"))
+        _cli2 = _wt2 / "bin" / "watch.mjs"
+        if not _cli2.exists():
+            await private_ai.finish(f"(*挠头*) 陪看插件没装好：找不到 {_cli2}")
+            return
+        await private_ai.send("(*搬小板凳*) 我看看你在放什么…")
+        try:
+            # 服务 / 窗口就位
+            if not _port_listening(9377):
+                _cf = 0x00000008 | 0x00000200 if os.name == "nt" else 0
+                subprocess.Popen(["node", str(_cli2), "bridge", "9377"], cwd=str(_wt2),
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 creationflags=_cf)
+                for _ in range(12):
+                    await asyncio.sleep(0.5)
+                    if _port_listening(9377):
+                        break
+            if not _port_listening(9333):
+                _cf2 = 0x00000008 | 0x00000200 if os.name == "nt" else 0
+                subprocess.Popen(["node", str(_cli2), "start", "https://www.bilibili.com/"],
+                                 cwd=str(_wt2), stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, creationflags=_cf2)
+                for _ in range(24):
+                    await asyncio.sleep(0.5)
+                    if _port_listening(9333):
+                        break
+
+            _st = await asyncio.to_thread(
+                lambda: __import__("subprocess").run(
+                    ["node", str(_cli2), "status"], capture_output=True, text=True,
+                    timeout=60, cwd=str(_wt2), encoding="utf-8", errors="replace"))
+            _out = (_st.stdout or "") + (_st.stderr or "")
+            if "读不到位置" in _out or "两条通道都没有" in _out:
+                _ext = Path.home() / "AppData" / "Local" / "dsh-watch-together" / "extension"
+                if _port_listening(9333):
+                    await private_ai.finish(
+                        "(*开好窗了*) 窗口开在 B站首页了 —— 你在那个窗口里点开一个视频，"
+                        "再发一次 /陪看 就行。" + chr(10)
+                        + f"（想用自己的浏览器：edge://extensions → 开发人员模式 → 加载解压缩的扩展 → 选 {_ext}）")
+                else:
+                    await private_ai.finish(
+                        "(*探头*) 读不到你在放哪个视频。两条路：" + chr(10)
+                        + f"①装浏览器扩展（一次性）：{_ext}" + chr(10)
+                        + "②我起的那个窗口里放（没起来就手动跑一下 node watch.mjs start）")
+                return
+
+            _title = ""
+            _tm = re.search(r"title\s+(.+)", _out)
+            if _tm:
+                _title = _tm.group(1).strip()[:60]
+            _seg_lbl = ""
+            _sm = re.search(r"seg\s+(\d{2}:\d{2}\.\d{2}[-–]\d{2}:\d{2}\.\d{2})", _out)
+            if _sm:
+                _seg_lbl = _sm.group(1)
+
+            _sg = await asyncio.to_thread(
+                lambda: __import__("subprocess").run(
+                    ["node", str(_cli2), "seg", "auto", "9"], capture_output=True, text=True,
+                    timeout=300, cwd=str(_wt2), encoding="utf-8", errors="replace"))
+            _sout = ((_sg.stdout or "") + (_sg.stderr or "")).strip()
+            _clean = _sout.replace("<storyboard>", "").replace("</storyboard>", "")
+
+            # 台词：一行里常挂多个时间码，要全拆
+            _cues = []
+            for _ln in _clean.splitlines():
+                for _m in re.finditer(r"\[(\d{2}:\d{2}\.\d{2})\]([^\[]+)", _ln):
+                    _ct, _cc = _m.group(1), _m.group(2).strip()
+                    if _cc:
+                        _cues.append((_ct, _cc))
+
+            # 分镜图
+            _imgs = re.findall(r"[A-Za-z]:[^\s\"']+\.(?:jpg|jpeg|png|webp)", _clean)
+            for _im in _imgs[:1]:
+                try:
+                    if Path(_im).exists():
+                        await private_ai.send(MessageSegment.image("file:///" + _im.replace(chr(92), "/")))
+                except Exception:  # noqa: BLE001
+                    pass
+
+            # 她自己的话（不转发原始清单）
+            _say, _cue_txt = "", ""
+            if _cues:
+                _cue_txt = " / ".join(f"{t} {c}" for t, c in _cues[:14])
+                try:
+                    _say = (await call_ai_raw(
+                        "你正陪主人一起看视频，刚看完这一段。画面在上一张分镜图里，台词是这些："
+                        + chr(10) + _cue_txt + chr(10) + chr(10)
+                        + "用你自己的话说一句（最多两句，具体、损一点都行，别念稿）。"
+                        + "不许提'分镜''字幕''ASR''证据'这些词，也别复述原句。",
+                        "deepseek", temperature=0.95, max_tokens=180) or "").strip()
+                except Exception as _ae:  # noqa: BLE001
+                    logger.warning(f"[陪看] 让她说话失败：{type(_ae).__name__}: {_ae}")
+
+            _reply_txt = _say or _cue_txt[:180] or "(*凑近屏幕*) 这段是纯画面，没声儿也没字幕，你自己看吧。"
+
+            # ★ 写记忆：聊天记录 + 当天素材 + 长期档案 + 连续上下文 + 桌宠
+            # 不写的话，明天她根本不记得一起看过什么。
+            try:
+                _psk = f"private_{user_id}"
+                _mem_msg = f"（陪看）{_title or '视频'} {_seg_lbl}".strip()
+                await asyncio.to_thread(add_memory, "主人", str(user_id), _psk, _mem_msg, _reply_txt)
+                await asyncio.to_thread(save_daily, _psk, "主人", str(user_id), _mem_msg, _reply_txt)
+                await ltm.enqueue_pending(_psk, "主人", _mem_msg)
+                await ltm.enqueue_pending(_psk, NICKNAME, _reply_txt)
+                _history[gid].append(("主人", _mem_msg[:cfg.context.max_len_per_msg], False))
+                _history[gid].append((NICKNAME, _reply_txt[:cfg.context.max_len_per_msg], True))
+                logger.info(f"[陪看] 已写记忆：{_mem_msg[:50]}")
+            except Exception as _me:  # noqa: BLE001
+                logger.warning(f"[陪看] 写记忆失败：{type(_me).__name__}: {_me}")
+
+            await private_ai.finish(_reply_txt)
+        except FinishedException:
+            raise
+        except Exception as _e:  # noqa: BLE001
+            await private_ai.finish(f"(*挠头*) 陪看出错了：{type(_e).__name__}: {_e}")
+        return
     _private_conv = f"p:{event.user_id}"
     _LAST_USER_TS[_private_conv] = time.time()
     _private_run_tok = _new_run(_private_conv, str(event.user_id))
@@ -13364,6 +13577,19 @@ async def proactive_private_chat():
         return
     text = (text or "").strip()
     if len(text) < 6:
+        return
+    # 2026-11-08 observe：只记录，不真发。默认 observe —— 复核过再切 auto。
+    try:
+        from plugins import agency as _agm
+        _amode = _agm.accept_mode()
+    except Exception:  # noqa: BLE001
+        _amode = "observe"
+    if _amode != "auto":
+        try:
+            _agm.log_would_say(text, "主动私聊")
+        except Exception:  # noqa: BLE001
+            pass
+        logger.info(f"[observe] 本来要说：{text[:40]}")
         return
     try:
         bot = get_bot()

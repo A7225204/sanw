@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1030" height="900" viewBox="0 -190 1030 900">
+<rect x="0" y="-190" width="1030" height="900" fill="#ffffff"/>
+<path d="M200.0,84 L200.0,130" fill="none" stroke="#888888" stroke-width="1.4"/>
+<polygon points="195.0,122 205.0,122 200.0,130" fill="#888888"/>
+<rect x="183.8" y="97.0" width="32.400000000000006" height="18" fill="#ffffff" opacity="0.92"/>
+<text x="200.0" y="110.0" font-family="Microsoft YaHei,sans-serif" font-size="11" fill="#555555" text-anchor="middle">往下拆</text>
+<path d="M200.0,214 L200.0,260" fill="none" stroke="#888888" stroke-width="1.4"/>
+<polygon points="195.0,252 205.0,252 200.0,260" fill="#888888"/>
+<path d="M200.0,344 L200.0,390" fill="none" stroke="#888888" stroke-width="1.4"/>
+<polygon points="195.0,382 205.0,382 200.0,390" fill="#888888"/>
+<path d="M200.0,474 L200.0,520" fill="none" stroke="#888888" stroke-width="1.4"/>
+<polygon points="195.0,512 205.0,512 200.0,520" fill="#888888"/>
+<path d="M320,42.0 L360,42.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="352,37.0 352,47.0 360,42.0" fill="#888888"/>
+<path d="M320,172.0 L360,172.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="352,167.0 352,177.0 360,172.0" fill="#888888"/>
+<path d="M320,302.0 L360,302.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="352,297.0 352,307.0 360,302.0" fill="#888888"/>
+<path d="M320,432.0 L360,432.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="352,427.0 352,437.0 360,432.0" fill="#888888"/>
+<path d="M320,562.0 L360,562.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="352,557.0 352,567.0 360,562.0" fill="#888888"/>
+<path d="M680,42.0 L720,42.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="712,37.0 712,47.0 720,42.0" fill="#888888"/>
+<path d="M680,172.0 L720,172.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="712,167.0 712,177.0 720,172.0" fill="#888888"/>
+<path d="M680,302.0 L720,302.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="712,297.0 712,307.0 720,302.0" fill="#888888"/>
+<path d="M680,432.0 L720,432.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="712,427.0 712,437.0 720,432.0" fill="#888888"/>
+<path d="M680,562.0 L720,562.0" fill="none" stroke="#888888" stroke-width="1.4" stroke-dasharray="4,4"/>
+<polygon points="712,557.0 712,567.0 720,562.0" fill="#888888"/>
+<text x="92" y="-123.4" font-family="Microsoft YaHei,sans-serif" font-size="26" fill="#111111" text-anchor="start" font-weight="600">大肥鱼 · 全部结构</text>
+<text x="92" y="-81.7" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#666666" text-anchor="start">2026-11-08 06:3x 实测 · 5 个层次：外面进得来的、跑着的、写代码的、存着的、按时间动的</text>
+<text x="200.0" y="-43.8" font-family="Microsoft YaHei,sans-serif" font-size="12" fill="#999999" text-anchor="middle" font-weight="600">层次</text>
+<text x="520.0" y="-43.8" font-family="Microsoft YaHei,sans-serif" font-size="12" fill="#999999" text-anchor="middle" font-weight="600">里面有什么</text>
+<text x="840.0" y="-43.8" font-family="Microsoft YaHei,sans-serif" font-size="12" fill="#999999" text-anchor="middle" font-weight="600">关键数字 / 载体</text>
+<rect x="80" y="0" width="240" height="84" rx="8" fill="#f5f5f5" stroke="#666666" stroke-width="1.5"/>
+<text x="200.0" y="33.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">① 外部世界</text>
+<text x="200.0" y="53.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">她能接触到的东西</text>
+<text x="520.0" y="33.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">B站 · 抖音 · 火山方舟 · DeepSeek</text>
+<text x="520.0" y="53.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">飞书 · QQ (NapCat) · 本地模型</text>
+<rect x="720" y="0" width="240" height="84" rx="0" fill="#f5f5f5" stroke="#999999" stroke-width="1.5"/>
+<text x="840.0" y="33.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#666666" text-anchor="middle">7 条对外通道</text>
+<text x="840.0" y="53.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#666666" text-anchor="middle">全部有额度/风控</text>
+<rect x="80" y="130" width="240" height="84" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.5"/>
+<text x="200.0" y="163.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">② 进程 / 服务</text>
+<text x="200.0" y="183.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">真正在跑的</text>
+<text x="520.0" y="153.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">bot.py 9140 · NapCat · 桌宠 25616</text>
+<text x="520.0" y="173.3" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">面板 8090 · ComfyUI 8188 · TTS 7860</text>
+<text x="520.0" y="192.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">ASR 8010 · RVC 8101</text>
+<rect x="720" y="130" width="240" height="84" rx="0" fill="#dae8fc" stroke="#999999" stroke-width="1.5"/>
+<text x="840.0" y="163.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#445566" text-anchor="middle">8 个服务</text>
+<text x="840.0" y="183.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#445566" text-anchor="middle">按需启停省显存</text>
+<rect x="80" y="260" width="240" height="84" rx="8" fill="#d5e8d4" stroke="#82b366" stroke-width="1.5"/>
+<text x="200.0" y="293.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">③ 插件</text>
+<text x="200.0" y="313.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">她的行为全在这</text>
+<text x="520.0" y="283.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">聊天人格 5 · 记忆梦 11 · B站 7</text>
+<text x="520.0" y="303.3" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">抖音 4 · 媒体图像声音 7 · 生活日程 5</text>
+<text x="520.0" y="322.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">社交投递 5 · 基础设施 5 · 其他 42</text>
+<rect x="720" y="260" width="240" height="84" rx="0" fill="#d5e8d4" stroke="#999999" stroke-width="1.5"/>
+<text x="840.0" y="293.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#335522" text-anchor="middle">91 个 .py</text>
+<text x="840.0" y="313.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#335522" text-anchor="middle">插件目录 plugins/</text>
+<rect x="80" y="390" width="240" height="84" rx="8" fill="#e1d5e7" stroke="#9673a6" stroke-width="1.5"/>
+<text x="200.0" y="423.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">④ 数据</text>
+<text x="200.0" y="443.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">她记得的东西</text>
+<text x="520.0" y="413.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">shared_memory.db 3602 行</text>
+<text x="520.0" y="433.3" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">长期记忆 295 条 · 向量 375 条</text>
+<text x="520.0" y="452.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">情绪/激素/三我/欲望/睡眠状态</text>
+<rect x="720" y="390" width="240" height="84" rx="0" fill="#e1d5e7" stroke="#999999" stroke-width="1.5"/>
+<text x="840.0" y="423.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#442255" text-anchor="middle">104 个 json</text>
+<text x="840.0" y="443.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#442255" text-anchor="middle">memory/ 共 17MB</text>
+<rect x="80" y="520" width="240" height="84" rx="8" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.5"/>
+<text x="200.0" y="553.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">⑤ 定时</text>
+<text x="200.0" y="573.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle" font-weight="600">没人叫也动</text>
+<text x="520.0" y="543.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">cron 每小时 19 · interval 分钟 12</text>
+<text x="520.0" y="563.3" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">interval 秒 8 · cron 分钟 4</text>
+<text x="520.0" y="582.8" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#111111" text-anchor="middle">+ 随机窗口触发（吃饭/睡覺/日记）</text>
+<rect x="720" y="520" width="240" height="84" rx="0" fill="#ffe6cc" stroke="#999999" stroke-width="1.5"/>
+<text x="840.0" y="553.55" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#664400" text-anchor="middle">45 个 scheduled_job</text>
+<text x="840.0" y="573.05" font-family="Microsoft YaHei,sans-serif" font-size="13" fill="#664400" text-anchor="middle">最密的 3 秒一次</text>
+<text x="92" y="656.2" font-family="Microsoft YaHei,sans-serif" font-size="12" fill="#999999" text-anchor="start">L1 7 条通道 · L2 8 个服务 · L3 91 个插件 · L4 104 个文件/17MB · L5 45 个定时任务</text>
+</svg>

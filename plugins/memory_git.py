@@ -51,10 +51,16 @@ ENV = {
 }
 
 
+# 2026-11-08：面板 server.py 跑在 pythonw 下（没有控制台），前端每 5 秒轮询 /api/health，
+# 每次都会经 self_check 走这里跑两条 git。如果不带 CREATE_NO_WINDOW，
+# Windows 会给每条 git 新建一个控制台 → 屏幕上就是黑框一闪一闪。这里统一压掉。
+_NOWIN = {"creationflags": 0x08000000} if os.name == "nt" else {}
+
+
 def _run(*args: str, timeout: int = 30) -> tuple[int, str]:
     try:
         r = subprocess.run(["git", *args], capture_output=True, env=ENV,
-                           timeout=timeout, cwd=str(ROOT))
+                           timeout=timeout, cwd=str(ROOT), **_NOWIN)
         out = (r.stdout or b"").decode("utf-8", "replace")
         err = (r.stderr or b"").decode("utf-8", "replace")
         return r.returncode, (out or err).strip()

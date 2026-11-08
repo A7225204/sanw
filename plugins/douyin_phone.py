@@ -2445,7 +2445,7 @@ async def _preview_item_video(it: dict) -> tuple[str, str]:
             )
             _back_gesture()
             _wait_node(_is_interaction_node, timeout=8.0, desc="返回后的互动列表")
-            _ensure_interaction_page()
+            await asyncio.to_thread(_ensure_interaction_page)
             return (fallback_title or title), fallback_frame
         # 先抓视频 id → 走"下载+抽帧+音频转写"（有缓存就直接用缓存）
         _vid_url = _current_aweme_url()
@@ -2491,9 +2491,9 @@ async def _poll_once_impl() -> None:
         _skip(FC_DISABLED, "插件开关是关的（enabled=false），本轮不跑")
         return
     with _phase("wake"):
-        _wake()
+        await asyncio.to_thread(_wake)   # 2026-11-08：adb 同步会阻塞整个 event loop
     with _phase("navigate"):
-        root, why = _ensure_interaction_page()
+        root, why = await asyncio.to_thread(_ensure_interaction_page)
     if root is None:
         # 手机没连上 / 没进抖音：先撤掉状态栏，再记失败
         _clear_activity()
@@ -2510,7 +2510,7 @@ async def _poll_once_impl() -> None:
         except Exception as e:  # noqa: BLE001
             _exc("设置活动状态", e)
     with _phase("refresh"):
-        root2 = _refresh_interaction_page()
+        root2 = await asyncio.to_thread(_refresh_interaction_page)
     if root2 is not None:
         root = root2
     else:
@@ -2613,7 +2613,7 @@ async def _poll_once_impl() -> None:
     with _phase("preview"):
         pre_title, pre_frame = await _preview_item_video(it)
     with _phase("refind"):
-        root_after, why2 = _ensure_interaction_page()
+        root_after, why2 = await asyncio.to_thread(_ensure_interaction_page)
         if root_after is None:
             code2 = FC_DUMP_FAILED if why2 == "dump_failed" else FC_INTERACTION_PAGE_FAILED
             _fail(code2, f"看完视频后没回到互动消息（原因={why2}）")
@@ -2638,7 +2638,7 @@ async def _poll_once_impl() -> None:
         it = it2
 
     with _phase("open_reply"):
-        if not _open_reply_box(it):
+        if not await asyncio.to_thread(_open_reply_box, it):
             # t8/t10：点回复失败也要计数，连续 3 次就写 seen 放弃，避免同一 key 每轮白烧 60~200s
             code = ((_CUR.failure_code if _CUR is not None else "") or FC_INPUT_NOT_FOUND)
             _count_failure(st, seen, key, code)
@@ -2646,7 +2646,7 @@ async def _poll_once_impl() -> None:
             return
 
     with _phase("caption"):
-        root = _dump("caption")
+        root = await asyncio.to_thread(_dump, "caption")
         caption = ""
         if root is not None:
             for n in _nodes(root):

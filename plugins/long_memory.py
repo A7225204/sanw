@@ -891,6 +891,67 @@ def _trauma_weight(it: dict) -> float:
         return 0.0
 
 
+def _reactivate(facts: list[dict], k: int = 4) -> None:
+    """再激活（2026-11-08，移植 BioCore 的 recall-reactivation）。
+
+    召回不只是"想起来"，还会带情绪回来：
+      · 想起被夸的事  → DA/OXY 微升
+      · 想起被凶的事  → CORT 微升
+      · 想起一起做过的事 → OXY 微升
+
+    刻意压得很小（单次 ±0.9 上限），因为这是"想起来"不是"重新发生"；
+    而且每轮都会召回，不压就等于每轮都在涨激素。
+    """
+    if not facts:
+        return
+    try:
+        from plugins import hormones as _h
+    except Exception:  # noqa: BLE001
+        return
+    try:
+        st = _h.values()
+    except Exception:  # noqa: BLE001
+        return
+
+    d_da = d_oxy = d_cort = d_ser = 0.0
+    n = 0
+    for it in facts[:max(1, int(k))]:
+        fact = str(it.get("fact") or "")
+        if not fact:
+            continue
+        n += 1
+        trauma = float(_trauma_weight(it) or 0.0)
+        # 负面词 → CORT
+        if any(t in fact for t in ("挨骂", "凶", "吵", "生气", "难过", "哭", "崩", "骂", "讨厌", "烦死")):
+            d_cort += 0.35 + 0.4 * trauma
+            d_ser -= 0.15
+        # 正面词 → DA / OXY
+        if any(t in fact for t in ("夸", "喜欢", "开心", "笑", "奖励", "好棒", "答应", "陪我")):
+            d_da += 0.30
+            d_oxy += 0.30
+        # 一起做过的事 → OXY
+        if any(t in fact for t in ("一起", "陪我", "我们", "合照", "语音", "看视频")):
+            d_oxy += 0.20
+
+    if not n:
+        return
+    # 除以条数（别因为召回了 4 条就 ×4），再封顶 ±0.9
+    d_da = max(-0.9, min(0.9, d_da / n * 1.4))
+    d_oxy = max(-0.9, min(0.9, d_oxy / n * 1.4))
+    d_cort = max(-0.9, min(0.9, d_cort / n * 1.4))
+    d_ser = max(-0.6, min(0.6, d_ser / n * 1.4))
+    if abs(d_da) + abs(d_oxy) + abs(d_cort) + abs(d_ser) < 0.08:
+        return
+    try:
+        new = dict(st)
+        for key, delta in (("DA", d_da), ("OXY", d_oxy), ("CORT", d_cort), ("SER", d_ser)):
+            if delta:
+                new[key] = max(0.0, min(100.0, float(new.get(key, 50.0)) + delta))
+        _h.nudge({"DA": d_da, "OXY": d_oxy, "CORT": d_cort, "SER": d_ser})
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _soul_severity() -> float:
     """当前超我严厉度 0~1。实时算（用当刻 CORT），不等每天 3:10 的日更。"""
     try:
@@ -1121,6 +1182,10 @@ def archive_related(scope: str, query: str, k: int = 4) -> str:
         lines.append("【有点像，不一定准】")
         lines += ["- " + str(it.get("subject") or "群友") + "：" + str(it.get("fact", ""))
                   for it in _maybe]
+    try:
+        _reactivate(ordered, 4)
+    except Exception:  # noqa: BLE001
+        pass
     return chr(10).join(lines)
 
 

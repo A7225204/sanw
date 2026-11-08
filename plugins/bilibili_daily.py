@@ -265,6 +265,20 @@ def _sample_transcript(text: str, budget: int = 2400) -> tuple[str, str]:
     )
 
 
+def parse_ts(text: str) -> int:
+    """从文本里捞 [mm:ss] 或 [h:mm:ss]，返回秒数；没有就 0。（2026-11-08 证据链）"""
+    import re as _re
+    m = _re.search(r"\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]", str(text or ""))
+    if not m:
+        return 0
+    try:
+        a, b = int(m.group(1)), int(m.group(2))
+        c = m.group(3)
+        return (a * 3600 + b * 60 + int(c)) if c else (a * 60 + b)
+    except (TypeError, ValueError):
+        return 0
+
+
 async def _summarize(res: dict) -> str:
     """把媒体分析结果压成一句她能讲出来的话。"""
     title = str(res.get("title") or "").strip()
@@ -289,7 +303,9 @@ async def _summarize(res: dict) -> str:
             [{"role": "system", "content": "你在扮演「蓝色大肥鱼」，一只傲娇嘴损但心软的鲸鱼拟人少女。"},
              {"role": "user", "content": f"{material}\n\n用 2 句话（60 字内）说说这视频讲了啥、你什么感想。"
                                         "口语、有态度，不逐条复述，不提模型和系统。"
-                                        "只说你真看到的部分，标了抽段或稿子有问题就别补你没看到的。"}],
+                                        "只说你真看到的部分，标了抽段或稿子有问题就别补你没看到的。"
+                                        "如果稿子带 [mm:ss] 时间码，在你觉得最关键的那句前面"
+                                        "加一个时间码（例：[02:15]），一处就够。"}],
             temperature=0.9, max_tokens=200, record_scope="bili_daily", channel="system")
         out = str(reply or "").strip()
         if out:
@@ -517,13 +533,27 @@ async def watch(url: str, by: str = "scheduler", part: int = 0,
             _save(d)
             try:
                 from plugins import long_memory
+                # 2026-11-08（A 方案）：知识卡必须带证据链 —— 至少能跳回原视频。
+                # 完整形态是 evidence=[{t, quote}] + ?t=秒，但字幕本身不带时间戳，
+                # 这一步先保证「点得回去」；精确秒数要 transcript 带 [mm:ss] 才能做。
+                _ev_url = f"https://www.bilibili.com/video/{bvid}" if bvid else ""
+                _qv = []
+                if _total > 1 and cur > 1:
+                    _qv.append(f"p={cur}")
+                _ts = parse_ts(ep.get("summary") or "")
+                if _ts > 0:
+                    _qv.append(f"t={_ts}")
+                if _qv:
+                    _ev_url += "?" + "&".join(_qv)
                 long_memory.add_learned(
                     f"B站视频《{ep['title'][:40]}》：{ep['summary'][:100]}",
-                    source="B站热门", kind="news", ttl_days=LEARN_TTL)
+                    source="B站热门", kind="news", ttl_days=LEARN_TTL,
+                    evidence=_ev_url)
                 if _total > 1:
                     long_memory.add_learned(
                         f"在追B站合集《{ep['title'][:30]}》，已看到第 {cur}/{_total} 集",
-                        source="B站追剧", kind="news", ttl_days=120)
+                        source="B站追剧", kind="news", ttl_days=120,
+                        evidence=_ev_url)
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"[B站刷] 记学习失败：{type(e).__name__}: {e}")
     finally:

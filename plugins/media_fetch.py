@@ -250,6 +250,24 @@ async def _bili_fetch(url: str, with_audio: bool = True) -> dict:
             try:
                 subs = await asyncio.to_thread(bili_dl.fetch_subtitles, url)
                 out["subtitle_lines"] = len(subs)
+                # 2026-11-08（证据链）：B站字幕带时间码，比 ASR 准、免费、还能跳回。
+                # 拼成 "[mm:ss] 原句"，下游 _summarize 就能引用具体秒数。
+                if subs:
+                    _lines = []
+                    for _s in subs:
+                        try:
+                            _sec = int(float(_s.get("from") or 0))
+                        except (TypeError, ValueError):
+                            _sec = 0
+                        _txt = str(_s.get("text") or "").strip()
+                        if not _txt:
+                            continue
+                        _lines.append(f"[{_sec // 60:02d}:{_sec % 60:02d}] {_txt}")
+                    if _lines:
+                        out["transcript"] = chr(10).join(_lines)[:TR_MAX]
+                        out["transcript_src"] = "bilibili_cc"
+                        out["text_coverage"] = coverage_of(out["transcript"])
+                        logger.info(f"[媒体分析] 用 B站字幕当 transcript（{len(_lines)} 行，带时间码）")
             except Exception as e_sub:  # noqa: BLE001
                 logger.warning(f"[媒体分析] 拉字幕失败：{type(e_sub).__name__}: {e_sub}")
             sheets = await asyncio.to_thread(

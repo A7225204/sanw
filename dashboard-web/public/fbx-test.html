@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>大肥鱼 · FBX 动作测试</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0e16;overflow:hidden;font-family:system-ui,sans-serif}
+  #app{position:fixed;inset:0}
+  #hud{position:fixed;left:14px;top:14px;color:#cfe6ff;font-size:13px;background:rgba(8,16,28,.75);
+       border:1px solid rgba(90,140,190,.3);border-radius:10px;padding:10px 12px;line-height:1.7;pointer-events:none}
+  #hud b{color:#ffd77a}
+  #bar{position:fixed;left:0;right:0;bottom:0;padding:10px;display:flex;flex-wrap:wrap;gap:6px;
+       background:rgba(8,16,28,.85);border-top:1px solid rgba(90,140,190,.25);z-index:9}
+  #bar button{background:#1e2a3c;color:#cfe0f5;border:1px solid #34506e;border-radius:7px;
+              padding:6px 11px;font-size:12px;cursor:pointer}
+  #bar button:hover{background:#28405c;border-color:#4a7aa8}
+  #bar button.on{background:#2b6da8;border-color:#4a9de0;color:#eaf4ff}
+  #msg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);color:#9fc0d6;font-size:14px;z-index:9}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="hud">大肥鱼 · FBX<br><span id="st">加载中</span></div>
+<div id="msg">加载中…</div>
+<div id="bar"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "/memory-viz/vendor/three/three.module.js",
+  "three/addons/": "/memory-viz/vendor/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+const app = document.getElementById('app');
+const msg = document.getElementById('msg');
+const st  = document.getElementById('st');
+const bar = document.getElementById('bar');
+
+// ══════ 渲染器 ══════
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1218);
+
+const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.05, 200);
+
+// 光
+scene.add(new THREE.AmbientLight(0xfff4e6, 0.95));
+const hemi = new THREE.HemisphereLight(0xdfefff, 0xa09080, 0.85); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffffff, 2.0);
+key.position.set(2.5, 4.5, 3.0); key.castShadow = true;
+key.shadow.mapSize.set(1024,1024);
+key.shadow.camera.left=-3; key.shadow.camera.right=3;
+key.shadow.camera.top=4; key.shadow.camera.bottom=-1;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x88aaff, 1.2); rim.position.set(-2,2.5,-3); scene.add(rim);
+
+// 地面
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(4, 64),
+  new THREE.MeshStandardMaterial({ color:0x2a3444, roughness:0.9, metalness:0.03 })
+);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true;
+scene.add(ground);
+
+// ══════ 骨骼名映射：Mixamo → 模型 ══════
+// 模型骨架是 Blender/Rigify 命名（hips / upper_arm.L …），Mixamo 是 mixamorig:Hips
+const BONE_MAP = {
+  'Hips':'hips', 'Spine':'spine', 'Spine1':'chest', 'Spine2':'chest',
+  'Neck':'neck', 'Head':'head',
+  'LeftShoulder':'shoulder.L', 'RightShoulder':'shoulder.R',
+  'LeftArm':'upper_arm.L',     'RightArm':'upper_arm.R',
+  'LeftForeArm':'lower_arm.L', 'RightForeArm':'lower_arm.R',
+  'LeftHand':'hand.L',         'RightHand':'hand.R',
+  'LeftUpLeg':'upper_leg.L',   'RightUpLeg':'upper_leg.R',
+  'LeftLeg':'lower_leg.L',     'RightLeg':'lower_leg.R',
+  'LeftFoot':'foot.L',         'RightFoot':'foot.R',
+  'LeftToeBase':'toes.L',      'RightToeBase':'toes.R',
+};
+
+function stripPrefix(n) {
+  return n.replace(/^mixamorig:?/, '').replace(/^mixamorig/, '');
+}
+
+// 把 FBX 动作的轨道名从 mixamorig:Hips.quaternion 改成 hips.quaternion
+function retargetClip(clip, boneNames) {
+  const tracks = [];
+  let hit = 0, miss = new Set();
+  for (const t of clip.tracks) {
+    const m = t.name.match(/^([^.]*)\.(.+)$/);
+    if (!m) continue;
+    const raw = stripPrefix(m[1]);
+    const target = BONE_MAP[raw];
+    if (!target || !boneNames.has(target)) { miss.add(raw); continue; }
+    t.name = `${target}.${m[2]}`;
+    tracks.push(t);
+    hit++;
+  }
+  const out = new THREE.AnimationClip(clip.name, clip.duration, tracks);
+  return { clip: out, hit, miss: [...miss] };
+}
+
+// ══════ 加载模型 ══════
+let mixer = null, model = null, actions = {};
+const boneNames = new Set();
+
+const fbx = new FBXLoader();
+fbx.load('models/fish.fbx', (obj) => {
+  model = obj;
+  model.traverse(o => {
+    if (o.isBone) boneNames.add(o.name);
+    if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; }
+  });
+  console.log('骨骼数:', boneNames.size, [...boneNames].slice(0,8));
+
+  // FBX 单位通常是 cm，缩放到 1 米级
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const h = size.y || 100;
+  const scale = h > 10 ? 1.6 / h : 1.0;      // 目标身高 1.6
+  model.scale.setScalar(scale);
+
+  model.updateMatrixWorld(true);
+  const box2 = new THREE.Box3().setFromObject(model);
+  const c2 = box2.getCenter(new THREE.Vector3());
+  model.position.x -= c2.x;
+  model.position.z -= c2.z;
+  model.position.y -= box2.min.y;
+  scene.add(model);
+
+  const H = (box2.max.y - box2.min.y);
+  window.__H = H;
+  camera.position.set(1.6, H*0.62, H*1.55);
+  camera.lookAt(0, H*0.52, 0);
+
+  mixer = new THREE.AnimationMixer(model);
+  msg.style.display = 'none';
+  st.textContent = `骨骼 ${boneNames.size} · 身高 ${H.toFixed(2)}`;
+  buildButtons();
+  loadAnimations();
+}, (x)=>{ if(x.total) msg.textContent = `模型 ${Math.round(x.loaded/x.total*100)}%`; else msg.textContent = `已读 ${(x.loaded/1024).toFixed(0)}KB`; },
+   (e)=>{ msg.textContent = '模型加载失败：'+e; console.error(e); });
+
+// ══════ 加载动作 ══════
+const ANIMS = ['AngryMx','JumpMx','Sit','SitIdleMx','Sleep','Stretch','Yawn'];   // 实际有 FBX 的 7 个
+
+function loadAnimations() {
+  let done = 0;
+  ANIMS.forEach(n => {
+    fbx.load(`models/anim/${n}.fbx`, (o) => {
+      const raw = o.animations?.[0];
+      if (!raw) { console.warn(n, '没有动画'); return; }
+      const { clip, hit, miss } = retargetClip(raw, boneNames);
+      if (hit === 0) { console.warn(n, '一条轨道都对不上', miss.slice(0,5)); return; }
+      const act = mixer.clipAction(clip);
+      act.setLoop(THREE.LoopRepeat, Infinity);
+      actions[n] = act;
+      console.log(`[${n}] 轨道 ${hit}/${raw.tracks.length} 时长 ${clip.duration.toFixed(2)}s`);
+    }, undefined, (e)=>console.warn(n,'加载失败'));
+  });
+}
+
+// ══════ 播放 ══════
+let cur = null;
+function play(name) {
+  const a = actions[name];
+  if (!a) { console.warn('没有动作', name); return; }
+  Object.entries(actions).forEach(([k,x]) => { if (k !== name) x.fadeOut(0.25); });
+  a.reset().fadeIn(0.25).play();
+  cur = name;
+  st.textContent = `动作：${name}`;
+  [...bar.children].forEach(b => b.classList.toggle('on', b.dataset.n === name));
+}
+
+function buildButtons() {
+  bar.innerHTML = '';
+  const add = (label, name) => {
+    const b = document.createElement('button');
+    b.textContent = label; b.dataset.n = name || '';
+    b.onclick = () => name ? play(name) : (Object.values(actions).forEach(a=>a.stop()), cur=null, st.textContent='停止');
+    bar.appendChild(b);
+  };
+  ANIMS.forEach(n => add(n, n));
+  add('⏹ 停', null);
+}
+
+// ══════ 循环 ══════
+const clock = new THREE.Clock();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (mixer) mixer.update(dt);
+  renderer.render(scene, camera);
+}
+loop();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+window.__play = play;
+window.__actions = actions;
+</script>
+</body>
+</html>

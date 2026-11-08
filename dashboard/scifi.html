@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>蓝色大肥鱼 · X-RAY</title>
+<style>
+:root{
+  --bg:#04070d; --panel:#070c15; --line:#16243a; --line2:#1e3350;
+  --ink:#dfeaf7; --sub:#7d95b5; --dim:#4d6484;
+  --blue:#3b82f6; --cyan:#38bdf8; --violet:#a78bfa; --pink:#f472b6;
+  --green:#34d399; --amber:#fbbf24; --red:#f87171;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:13px/1.5 "Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  padding:14px 18px 0; min-height:100vh;
+  background-image:
+    linear-gradient(rgba(59,130,246,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,.045) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+/* 扫描线 */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.014) 0 1px,transparent 1px 3px);
+}
+.mono{font-family:'Consolas','JetBrains Mono',ui-monospace,monospace;font-feature-settings:'tnum' 1}
+
+/* ============ 顶部状态卡 ============ */
+.top{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.stat{
+  border:1px solid var(--line);background:rgba(7,12,21,.82);
+  padding:9px 12px;position:relative;
+}
+.stat::before{
+  content:"";position:absolute;left:-1px;top:-1px;width:10px;height:10px;
+  border-left:1px solid rgba(59,130,246,.6);border-top:1px solid rgba(59,130,246,.6);
+}
+.stat-h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--sub)}
+.stat-h i{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);flex:none}
+.stat-h .lv{
+  margin-left:auto;font:10px/1 'Consolas',monospace;letter-spacing:1px;
+  color:rgba(59,130,246,.85);border:1px solid rgba(59,130,246,.3);padding:2px 5px;
+}
+.stat-v{margin-top:4px;font-size:15px;font-weight:700;color:#eaf4ff;letter-spacing:-.3px}
+.stat-v small{font-size:11px;font-weight:400;color:var(--dim);margin-left:5px;letter-spacing:0}
+
+/* ============ 主体两栏 ============ */
+.main{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+
+.panel{border:1px solid var(--line);background:rgba(7,12,21,.82);position:relative}
+.panel-h{
+  display:flex;align-items:center;gap:9px;padding:10px 14px;
+  border-bottom:1px solid var(--line);
+  font:10px/1 'Consolas',monospace;letter-spacing:2px;color:rgba(125,149,181,.9);
+  text-transform:uppercase;
+}
+.panel-h b{font:600 13px/1 "Microsoft YaHei",sans-serif;letter-spacing:.5px;color:#cfe0f5;text-transform:none}
+.panel-h .right{margin-left:auto;font-size:11px;letter-spacing:1px;color:rgba(59,130,246,.8);display:flex;gap:8px;align-items:center}
+
+/* ============ X-RAY 区 ============ */
+.xray{position:relative;height:520px;overflow:hidden}
+.xray .grid-bg{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(56,189,248,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(56,189,248,.055) 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:radial-gradient(circle at 50% 46%,#000 0%,rgba(0,0,0,.6) 45%,transparent 78%);
+}
+/* 中心立绘 */
+.core{
+  position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);
+  width:210px;height:210px;z-index:3;
+}
+.core img{
+  width:100%;height:100%;object-fit:contain;
+  /* 圆形羽化：只留中间人物，边缘融进背景 —— 参考图那种"从雾里浮出来" */
+  -webkit-mask-image:radial-gradient(circle at 50% 52%,#000 34%,rgba(0,0,0,.85) 48%,transparent 70%);
+  mask-image:radial-gradient(circle at 50% 52%,#000 34%,rgba(0,0,0,.85) 48%,transparent 70%);
+  filter:drop-shadow(0 0 30px rgba(56,189,248,.6)) drop-shadow(0 0 70px rgba(59,130,246,.35))
+         saturate(1.15) brightness(1.04);
+  opacity:.96;
+}
+/* 立绘下面再垫一层青色光晕，像被扫描到 */
+.core::before{
+  content:"";position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+  width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle,rgba(56,189,248,.28) 0%,rgba(59,130,246,.12) 45%,transparent 72%);
+  filter:blur(12px);z-index:-1;
+}
+.core{position:absolute}
+/* 同心环 */
+.ring{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none}
+.r1{width:250px;height:250px;border:1px solid rgba(56,189,248,.22)}
+.r2{width:310px;height:310px;border:1px dashed rgba(56,189,248,.13)}
+.r3{width:380px;height:380px;border:1px solid rgba(56,189,248,.07)}
+.scale{
+  position:absolute;left:50%;top:47%;width:310px;height:310px;margin:-155px 0 0 -155px;
+  border-radius:50%;pointer-events:none;
+  background:repeating-conic-gradient(rgba(56,189,248,.5) 0deg .7deg,transparent .7deg 15deg);
+  -webkit-mask:radial-gradient(circle,transparent 152px,#000 153px,#000 155px,transparent 156px);
+  mask:radial-gradient(circle,transparent 152px,#000 153px,#000 155px,transparent 156px);
+  animation:spin 30s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 连线的 SVG */
+.wires{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.wires line{stroke:rgba(56,189,248,.22);stroke-width:1}
+.wires line.hot{stroke:rgba(56,189,248,.55);stroke-dasharray:3 4;animation:dash 3s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-14}}
+
+/* 模块胶囊 */
+.mod{
+  position:absolute;z-index:4;display:flex;align-items:center;gap:7px;
+  padding:6px 11px;background:rgba(4,7,13,.94);
+  border:1px solid rgba(56,189,248,.28);
+  font:11px/1 'Consolas',monospace;letter-spacing:.5px;
+  white-space:nowrap;backdrop-filter:blur(4px);
+}
+.mod::before{
+  content:"";position:absolute;left:-1px;top:-1px;width:7px;height:7px;
+  border-left:1px solid rgba(56,189,248,.7);border-top:1px solid rgba(56,189,248,.7);
+}
+.mod i{width:5px;height:5px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+.mod b{font-weight:500;color:rgba(125,149,181,.95);font-size:10px;letter-spacing:1.2px}
+.mod em{font-style:normal;font-weight:700;color:#dff0ff;font-size:12px}
+/* 八个位置 */
+.m1{left:12px;top:56px}      .m2{right:12px;top:56px}
+.m3{left:12px;top:180px}     .m4{right:12px;top:180px}
+.m5{left:12px;top:304px}     .m6{right:12px;top:304px}
+.m7{left:50%;bottom:78px;transform:translateX(-50%)}
+.m8{left:50%;top:16px;transform:translateX(-50%)}
+
+/* 底部读数 */
+.xray-foot{
+  position:absolute;left:14px;right:14px;bottom:12px;display:flex;gap:18px;
+  font:10px/1 'Consolas',monospace;letter-spacing:1.6px;color:rgba(125,149,181,.8);
+  z-index:5;
+}
+.xray-foot .on{color:var(--green)}
+
+/* ============ 右侧控制台 ============ */
+.tabs{display:flex;gap:2px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.tab{
+  padding:4px 11px;font-size:11.5px;color:var(--sub);cursor:default;
+  border:1px solid transparent;letter-spacing:.5px;
+}
+.tab.on{color:#dff0ff;background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.32)}
+.tab em{font-style:normal;margin-left:5px;font:10px/1 'Consolas',monospace;color:rgba(59,130,246,.8)}
+
+.chips{display:flex;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.chip{
+  font:10.5px/1 'Consolas',monospace;padding:4px 9px;letter-spacing:.5px;
+  border:1px solid rgba(59,130,246,.28);color:rgba(125,149,181,.95);cursor:default;
+}
+.chip.on{background:rgba(59,130,246,.16);color:#cfe6ff;border-color:rgba(59,130,246,.55)}
+
+.rows{max-height:400px;overflow-y:auto;scrollbar-width:thin}
+.rows::-webkit-scrollbar{width:5px}
+.rows::-webkit-scrollbar-thumb{background:rgba(59,130,246,.22)}
+.row{
+  display:flex;gap:11px;padding:9px 14px;border-bottom:1px solid rgba(22,36,58,.6);
+  align-items:flex-start;
+}
+.row:hover{background:rgba(59,130,246,.045)}
+.tag{
+  flex:none;width:44px;padding:2px 0;text-align:center;
+  font:10px/1.4 'Consolas',monospace;letter-spacing:.5px;
+  border:1px solid currentColor;opacity:.9;
+}
+.t-read{color:var(--cyan)}   .t-write{color:var(--amber)}
+.t-inject{color:var(--violet)} .t-trigger{color:var(--green)}
+.t-warn{color:var(--red)}    .t-ok{color:var(--blue)}
+.row-main{flex:1;min-width:0}
+.row-k{font-size:12px;color:#d8e6f5;line-height:1.45}
+.row-k b{font-family:'Consolas',monospace;color:#9fd0ff;font-weight:600}
+.row-d{font-size:11px;color:var(--dim);margin-top:2px;line-height:1.5}
+.row-v{margin-left:auto;font:600 13px/1 'Consolas',monospace;color:#dff0ff;flex:none;padding-top:2px}
+
+/* ============ 底部图例 ============ */
+.legend{
+  display:flex;gap:16px;flex-wrap:wrap;padding:10px 4px 0;margin-top:12px;
+  border-top:1px solid var(--line);font-size:11px;color:var(--sub);
+}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:7px;height:7px;border-radius:50%;flex:none}
+
+.footline{
+  display:flex;gap:22px;padding:9px 4px 12px;margin-top:8px;
+  border-top:1px solid var(--line);font-size:11px;color:var(--dim);
+}
+.footline .r{margin-left:auto}
+
+@media (max-width:1200px){.main{grid-template-columns:1fr}}
+
+
+.memgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);margin:11px 14px}
+.memgrid div{background:rgba(4,7,13,.9);padding:11px 13px}
+.memgrid b{display:block;font:600 20px/1 'Consolas',monospace;color:#dff0ff}
+.memgrid span{display:block;font-size:10.5px;color:var(--dim);margin-top:3px;letter-spacing:.8px}
+.pre{margin:11px 14px;padding:11px 13px;background:rgba(4,7,13,.9);border:1px solid var(--line);
+font:11.5px/1.7 'Consolas',monospace;color:#b9cfe6;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
+.chk{display:flex;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(22,36,58,.6);font-size:12px;align-items:flex-start}
+.chk .st{flex:none;width:7px;height:7px;border-radius:50%;margin-top:5px}
+.chk .ok{background:var(--green)}.chk .bad{background:var(--red)}
+.chk .nm{width:72px;flex:none;color:#b9cfe6}
+.chk .ms{flex:1;color:var(--dim);font-size:11px;line-height:1.5}
+
+/* ==== 补：tab 面板与子列表（旧版没有这些类） ==== */
+.pane{display:none;max-height:452px;overflow-y:auto}
+.pane.on{display:block}
+.svc{display:flex;align-items:center;gap:9px;padding:8px 14px;border-bottom:1px solid rgba(22,36,58,.6);font-size:12px}
+.svc i{width:6px;height:6px;border-radius:50%;flex:none}
+.svc .up{background:var(--green);box-shadow:0 0 6px var(--green)}
+.svc .dn{background:rgba(125,149,181,.4)}
+.svc .nm{flex:1}
+.svc .dt{color:var(--dim);font:10.5px/1 'Consolas',monospace}
+
+.mem-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+border:1px solid rgba(59,130,246,.45);border-radius:2px;cursor:pointer;
+background:rgba(59,130,246,.10);color:#cfe6ff;font-size:12.5px;letter-spacing:.5px;
+text-decoration:none;transition:.15s}
+.mem-btn:hover{background:rgba(59,130,246,.22);box-shadow:0 0 16px rgba(59,130,246,.35);
+border-color:rgba(59,130,246,.8)}
+
+.xray{height:440px !important}
+.spark-wrap{padding:9px 14px 6px;border-top:1px solid var(--line)}
+.spark-h{font:10px/1 Consolas,monospace;letter-spacing:1.6px;color:rgba(125,149,181,.85);margin-bottom:7px}
+.spark-h span{color:rgba(77,100,132,.9);letter-spacing:1px}
+.spark{width:100%;height:126px;display:block}
+.spark .gl{stroke:rgba(56,189,248,.09);stroke-width:1}
+.spark .sl{fill:none;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.spark-lg{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--sub)}
+.spark-lg span{display:flex;align-items:center;gap:5px}
+.spark-lg i{width:7px;height:7px;border-radius:1px;flex:none}
+.spark-lg b{font-family:Consolas,monospace;color:#dff0ff;font-weight:600}
+
+/* 提亮 */
+/* 背景与面板 */
+body{--bg:#060b14 !important}
+body{background:#060b14 !important;
+background-image:linear-gradient(rgba(59,130,246,.065) 1px,transparent 1px),
+linear-gradient(90deg,rgba(59,130,246,.065) 1px,transparent 1px) !important;
+background-size:40px 40px !important}
+.panel,.stat{background:rgba(12,20,34,.94) !important;border-color:rgba(59,130,246,.22) !important}
+
+/* 文字提亮 */
+:root{--sub:#9fb6d1 !important;--dim:#7089ac !important;--ink:#e8f2fd !important}
+.row-d{color:#7d95b5 !important}
+.row-k{color:#e2eefa !important}
+.need-h,.ni-cap,.bar .row .name{color:rgba(159,182,209,.95) !important}
+
+/* 胶囊：边框 + 圆点 + 文字都亮一档 */
+.mod{border-color:rgba(96,165,250,.52) !important;background:rgba(10,18,30,.96) !important}
+.mod::before{border-color:rgba(96,165,250,.95) !important}
+.mod i{width:6px !important;height:6px !important;
+box-shadow:0 0 10px currentColor,0 0 3px currentColor,0 0 1px #fff !important;
+filter:brightness(1.35) saturate(1.2)}
+.mod b{color:rgba(159,182,209,1) !important}
+.mod em{color:#ffffff !important;text-shadow:0 0 10px rgba(120,190,255,.55)}
+
+/* 连线与环 */
+.wires line{stroke:rgba(96,165,250,.48) !important;stroke-width:1.1 !important}
+.wires line.hot{stroke:rgba(125,211,250,.85) !important}
+.r1{border-color:rgba(96,165,250,.40) !important}
+.r2{border-color:rgba(96,165,250,.26) !important}
+.r3{border-color:rgba(96,165,250,.16) !important}
+.scale{background:repeating-conic-gradient(rgba(125,211,250,.75) 0deg .8deg,transparent .8deg 15deg) !important}
+
+/* 标签页 */
+.tab{color:#9fb6d1 !important}
+.tab.on{color:#ffffff !important;background:rgba(59,130,246,.22) !important;border-color:rgba(96,165,250,.65) !important}
+
+/* 页面标题与分隔 */
+.panel-h{color:rgba(159,182,209,.95) !important;border-bottom-color:rgba(59,130,246,.22) !important}
+.panel-h b{color:#e8f2fd !important}
+.row{border-bottom-color:rgba(59,130,246,.14) !important}
+
+/* 顶部状态卡 */
+.stat-h{color:#9fb6d1 !important}
+.stat-v{color:#ffffff !important}
+.stat-v small{color:#7089ac !important}
+.stat-h .lv{color:rgba(96,165,250,1) !important;border-color:rgba(96,165,250,.5) !important}
+
+/* 底层发光（让整体不那么黑） */
+body::before{opacity:.9}
+
+/* 提亮第二轮 —— 上轮只提了 50%，还是暗 */
+body{background:#0a1220 !important;
+background-image:linear-gradient(rgba(59,130,246,.085) 1px,transparent 1px),
+linear-gradient(90deg,rgba(59,130,246,.085) 1px,transparent 1px) !important}
+.panel,.stat{background:rgba(16,26,42,.96) !important;border-color:rgba(96,165,250,.30) !important}
+.xray .grid-bg{opacity:1;
+background-image:linear-gradient(rgba(56,189,248,.09) 1px,transparent 1px),
+linear-gradient(90deg,rgba(56,189,248,.09) 1px,transparent 1px) !important}
+
+/* 立绘单独提亮 —— gif 本身是暗调照片 */
+.core img{filter:drop-shadow(0 0 34px rgba(56,189,248,.85))
+ drop-shadow(0 0 80px rgba(59,130,246,.5))
+ brightness(1.45) saturate(1.25) contrast(1.06) !important;opacity:1 !important}
+.core::before{background:radial-gradient(circle,rgba(56,189,248,.42) 0%,rgba(59,130,246,.18) 45%,transparent 74%) !important}
+
+/* 曲线加粗 + 发光 */
+.spark .sl{stroke-width:2.2 !important;filter:drop-shadow(0 0 4px currentColor)}
+.spark .gl{stroke:rgba(96,165,250,.16) !important}
+.spark-lg{color:#b9cfe6 !important}
+.spark-lg b{color:#ffffff !important}
+
+/* 胶囊再亮一档 */
+.mod{background:rgba(16,26,44,.98) !important;border-color:rgba(125,180,255,.62) !important}
+.mod i{width:7px !important;height:7px !important;filter:brightness(1.7) saturate(1.4)}
+.mod b{color:#cfe0f5 !important;font-weight:600 !important}
+
+/* 表格行描边更清楚 */
+.row{border-bottom-color:rgba(96,165,250,.20) !important}
+.tag{opacity:1 !important;font-weight:600}
+
+/* 顶部四卡 */
+.stat::before{width:12px;height:12px;border-color:rgba(96,165,250,.9) !important}
+
+/* 圆点补实体 —— 原来只有 box-shadow 没 background，所以是一团虚光，看着暗 */
+.mod i{
+  background:currentColor !important;
+  width:8px !important;height:8px !important;
+  box-shadow:
+    0 0 14px currentColor,
+    0 0 6px currentColor,
+    0 0 2px #fff !important;
+  filter:brightness(1.55) saturate(1.35) !important;
+  border:0 !important;
+}
+/* 图例小方块也补一层光 */
+.spark-lg i{box-shadow:0 0 7px currentColor}
+/* legend 的色点 */
+.legend i{box-shadow:0 0 8px currentColor}
+
+/* 撑满视口 —— 原来内容只占上半屏，下面全是空网格 */
+.main{
+  align-items:stretch !important;
+  min-height:calc(100vh - 200px) !important;
+}
+.panel{
+  display:flex !important;flex-direction:column !important;
+  min-height:0;
+}
+/* 左：X-RAY 吃掉剩余高度，曲线固定在底部 */
+.xray{
+  height:auto !important;
+  flex:1 1 auto !important;
+  min-height:400px !important;
+}
+.spark-wrap{flex:0 0 auto}
+/* 右：tab 之后的 pane 吃掉剩余，自己内部滚 */
+.pane{
+  max-height:none !important;
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  overflow-y:auto !important;
+}
+/* 曲线随宽度自适应，但给个上限别太扁 */
+.spark{height:150px !important}
+/* 底部图例贴到视口底 */
+body{display:flex !important;flex-direction:column !important;min-height:100vh}
+.main{flex:1 1 auto}
+.legend,.footline{flex:0 0 auto}
+
+/* 行均分剩余高度 —— 概览只有 8 行，撑不满一屏 */
+.pane.on{display:flex !important;flex-direction:column !important}
+.pane.on>.row{flex:1 1 auto !important;align-items:center !important;min-height:52px}
+.pane.on>.cg,.pane.on .cg{flex:0 0 auto !important}
+.pane.on>.row .row-main{display:flex;flex-direction:column;justify-content:center}
+/* 记忆/花费那种网格块不参与均分 */
+.pane.on>.memgrid,.pane.on>.pre,.pane.on>.svc-wrap{flex:0 0 auto}
+/* 左：曲线区也均分 */
+.spark-wrap{display:flex !important;flex-direction:column !important}
+.spark{flex:1 1 auto !important;height:auto !important;min-height:150px}
+/* xray 里模块位置随高度自适应（用百分比而不是固定 px） */
+.m1{top:12% !important}.m2{top:12% !important}
+.m3{top:42% !important}.m4{top:42% !important}
+.m5{top:70% !important}.m6{top:70% !important}
+.m7{bottom:9% !important}.m8{top:3% !important}
+.core{top:46% !important}
+.ring,.scale{top:46% !important}
+
+/* 花费四卡片 */
+.cg{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 14px}
+.ccard{border:1px solid rgba(96,165,250,.22);background:rgba(10,18,30,.9);padding:11px 13px}
+.ch{font:600 13px/1 "Microsoft YaHei",sans-serif;color:#e8f2fd;display:flex;align-items:baseline; gap:8px}
+.ch b{margin-left:auto;font:700 17px/1 Consolas,monospace;color:#ffc857;letter-spacing:-.3px}
+.cs{font:10px/1 Consolas,monospace;color:#7089ac;letter-spacing:1px;margin-top:3px}
+.cr{display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;font-size:12px;color:#cfe0f5}
+.cr .cn{color:#d8e6f5}
+.cr .cv{font:600 12px/1 Consolas,monospace;color:#b9d4f0}
+.cd{font:10px/1.4 Consolas,monospace;color:#5f7796;margin-top:1px}
+/* 花费 tab 里的 macgrid 保持原样 */
+.pane[data-pane="cost"] .cg{flex:0 0 auto}
+
+/* top3 —— 照参考图的 3 列 + 3 列 + 1 张 */
+.top3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.top3.one{grid-template-columns:repeat(3,1fr)}
+.top3.one>.stat{grid-column:auto}
+.stat{padding:8px 12px 9px}
+.stat .rv{margin-left:auto;font:600 13px/1 Consolas,monospace;color:#dff0ff;letter-spacing:-.2px}
+.stat-d{margin-top:3px;font-size:10.5px;color:#7089ac;line-height:1.35;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat.sm{padding:7px 12px 8px}
+.stat.sm .stat-v{font-size:13px;font-weight:600;color:#cfe0f5}
+.stat-h i.warn{background:#fbbf24;box-shadow:0 0 8px #fbbf24}
+.stat .lv{font-size:9px;padding:1px 4px}
+/* 顶部三排压缩一点，给主体留空间 */
+.top3 .stat-v{font-size:14px;margin-top:2px}
+
+/* 9 模块 - left 4 right 4 top 1 */
+.m1{left:12px !important;top:7% !important}
+.m2{left:12px !important;top:22% !important}
+.m3{left:12px !important;top:40% !important}
+.m3b{left:12px !important;top:55% !important}
+.m4b{left:12px !important;top:70% !important}
+.m5{left:12px !important;top:85% !important}
+.m8{left:50% !important;top:4% !important;transform:translateX(-50%) !important}
+.m4{right:12px !important;top:12% !important}
+.m6{right:12px !important;top:34% !important}
+.m7{right:12px !important;top:56% !important;bottom:auto !important;transform:none !important}
+.core{width:230px !important;height:290px !important;top:47% !important}
+.core img{-webkit-mask-image:none !important;mask-image:none !important;
+object-fit:contain !important;
+filter:drop-shadow(0 10px 26px rgba(0,0,0,.55)) drop-shadow(0 0 22px rgba(96,165,250,.45)) !important;
+opacity:1 !important}
+.core::before{display:none !important}
+
+/* 修：left/right 同时存在会拉满宽度 */
+.m1,.m2,.m3,.m3b,.m4b,.m5{right:auto !important}
+.m4,.m6,.m7{left:auto !important}
+.m8{left:50% !important;right:auto !important}
+/* 保证所有模块都不会被拉满 */
+.mod{max-width:150px}
+
+/* 9 模块定位 - 左4 右4 顶1 */
+.mod{max-width:150px}
+.m8{left:50% !important;top:4% !important;transform:translateX(-50%) !important;right:auto !important;bottom:auto !important}
+.m1{left:12px !important;top:14% !important;right:auto !important}
+.m2{left:12px !important;top:31% !important;right:auto !important}
+.m3b{left:12px !important;top:48% !important;right:auto !important}
+.m4b{left:12px !important;top:65% !important;right:auto !important}
+.m4{right:12px !important;top:14% !important;left:auto !important}
+.m6{right:12px !important;top:31% !important;left:auto !important}
+.m7{right:12px !important;top:48% !important;left:auto !important;bottom:auto !important;transform:none !important}
+.m5{right:12px !important;top:65% !important;left:auto !important}
+.m3{display:none !important}
+
+/* ===== MODULE CONSOLE 详情样式（照参考图） ===== */
+.mh{padding:14px 16px 12px;border-bottom:1px solid rgba(96,165,250,.18)}
+.mh-l{font:10px/1 Consolas,monospace;letter-spacing:2px;color:rgba(125,181,255,.85);
+display:flex;align-items:center;gap:6px}
+.mh-l i{width:6px;height:6px;border-radius:50%;background:#60a5fa;box-shadow:0 0 8px #60a5fa}
+.mh-nav{margin-left:auto;color:rgba(125,149,181,.8);letter-spacing:1px}
+.mh-t{font:600 22px/1.2 "Microsoft YaHei",sans-serif;color:#f2f8ff;margin-top:8px;letter-spacing:-.3px}
+.mh-s{font:11.5px/1.5 "Microsoft YaHei",sans-serif;color:#8ea4c4;margin-top:5px}
+.mtabs{display:flex;gap:14px;padding:10px 16px;border-bottom:1px solid rgba(96,165,250,.12);flex-wrap:wrap}
+.mt{font-size:12px;color:#7d95b5;cursor:default;padding-bottom:3px;border-bottom:1.5px solid transparent}
+.mt.on{color:#cfe6ff;border-bottom-color:#60a5fa}
+.mdesc{padding:12px 16px;font:12px/1.75 "Microsoft YaHei",sans-serif;color:#b9cfe6;
+border-bottom:1px solid rgba(96,165,250,.10)}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(96,165,250,.16);
+margin:12px 16px;border:1px solid rgba(96,165,250,.16)}
+.mg{background:rgba(10,18,32,.96);padding:12px 14px}
+.mg b{display:block;font:700 22px/1 Consolas,monospace;color:#eaf4ff;letter-spacing:-.5px}
+.mg span{display:block;font-size:11px;color:#7d95b5;margin-top:4px;letter-spacing:.5px}
+.msee{padding:6px 16px 16px}
+.msee-h{font-size:12px;color:#8ea4c4;margin-bottom:8px}
+.msee-i{display:flex;gap:8px;font-size:12px;color:#b9cfe6;line-height:1.7;padding:3px 0}
+.msee-i i{width:5px;height:5px;border-radius:50%;background:#60a5fa;flex:none;margin-top:8px;
+box-shadow:0 0 6px #60a5fa}
+
+/* 自检卡 */
+.chk-card{border:1px solid rgba(96,165,250,.30);background:rgba(16,26,42,.96);
+padding:10px 14px;margin-bottom:10px;cursor:pointer;transition:.15s;position:relative}
+.chk-card:hover{border-color:rgba(96,165,250,.7);background:rgba(20,32,52,.98)}
+.chk-h{display:flex;align-items:center;gap:7px;font-size:12px;color:#9fb6d1}
+.chk-h i{width:8px;height:8px;border-radius:50%;flex:none}
+.chk-h i.ok{background:#34d399;box-shadow:0 0 10px #34d399}
+.chk-h i.bad{background:#f87171;box-shadow:0 0 12px #f87171}
+.chk-h .lv{margin-left:auto;font:10px/1 Consolas,monospace;color:rgba(96,165,250,.9);
+border:1px solid rgba(96,165,250,.35);padding:2px 5px}
+.chk-body{display:flex;align-items:baseline;gap:10px;margin-top:5px}
+.chk-body b{font:700 15px/1 Consolas,monospace;color:#eaf4ff}
+.chk-body span{font-size:11px;color:#7d95b5}
+.chk-err{margin-top:5px;font:10.5px/1.5 Consolas,monospace;color:#f87171;
+max-height:0;overflow:hidden;transition:max-height .2s}
+.chk-card.open .chk-err{max-height:120px}
+
+/* tab 盒子（之前被覆盖成一坨） */
+.tabs{display:flex;gap:3px;padding:9px 12px;border-bottom:1px solid rgba(96,165,250,.18);
+flex-wrap:wrap !important}
+.tab{display:inline-block !important;padding:4px 10px !important;font-size:11.5px !important;
+color:#8ea4c4 !important;cursor:pointer;border:1px solid transparent !important;
+letter-spacing:.3px;user-select:none;transition:.15s;white-space:nowrap}
+.tab:hover{color:#cfe6ff !important}
+.tab.on{color:#ffffff !important;background:rgba(59,130,246,.22) !important;
+border-color:rgba(96,165,250,.65) !important}
+
+/* tab 不被压缩 */
+.tabs{display:flex !important;flex-wrap:wrap !important;gap:4px !important}
+.tab{flex:0 0 auto !important;display:inline-flex !important;align-items:center !important;
+min-width:56px !important;justify-content:center !important;
+padding:5px 9px !important;font-size:11.5px !important;
+color:#8ea4c4 !important;cursor:pointer !important;
+border:1px solid transparent !important;white-space:nowrap !important}
+.tab.on{color:#fff !important;background:rgba(59,130,246,.24) !important;
+border-color:rgba(96,165,250,.7) !important}
+
+/* 数字格可点 */
+.mg{cursor:pointer !important;transition:.15s}
+.mg:hover{background:rgba(20,32,52,.98) !important}
+.mg.on{background:rgba(59,130,246,.16) !important;box-shadow:inset 0 0 0 1px rgba(96,165,250,.5)}
+/* 自检卡错误展开 */
+.stat .chk-err{max-height:0;overflow:hidden;transition:max-height .2s;
+font:10px/1.4 Consolas,monospace;color:#f87171;margin-top:4px}
+.stat.open .chk-err{max-height:80px}
+
+.core img.solid{display:none !important}
+.core img.wire{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+filter:grayscale(1) contrast(3.2) brightness(1.55)
+ drop-shadow(0 0 6px rgba(56,189,248,.95))
+ drop-shadow(0 0 22px rgba(14,165,233,.75))
+ drop-shadow(0 0 46px rgba(37,99,235,.45));
+mix-blend-mode:screen;opacity:.55}
+.core .skel{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+.core .skel line.spine{stroke:rgba(125,211,250,.85);stroke-width:1.6;
+filter:drop-shadow(0 0 6px rgba(56,189,248,.9));stroke-dasharray:3 4}
+.core .skel .rib{fill:none;stroke:rgba(56,189,248,.55);stroke-width:1.3;
+stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(56,189,248,.7))}
+.core .skel .skull{fill:none;stroke:rgba(125,211,250,.70);stroke-width:1.4;
+filter:drop-shadow(0 0 8px rgba(56,189,248,.8))}
+.core .skel .node{fill:rgba(186,230,253,.95);
+filter:drop-shadow(0 0 6px rgba(56,189,248,1))}
+
+/* 线框加强 */
+.core img.solid{display:none !important;visibility:hidden !important}
+.core img.wire{
+  display:block !important;visibility:visible !important;
+  position:absolute !important;inset:0 !important;
+  width:100% !important;height:100% !important;object-fit:contain !important;
+  filter:grayscale(1) brightness(2.6) contrast(4.5) sepia(1) hue-rotate(165deg) saturate(4.5) !important;
+  mix-blend-mode:screen !important;
+  opacity:.42 !important;
+}
+/* 加一层青色叠加，让线看起来是青的 */
+.core::after{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(circle at 50% 48%,rgba(56,189,248,.30) 0%,transparent 62%);
+  mix-blend-mode:color;
+}
+
+/* 真正的青色线框：SVG feColorMatrix 把颜色统一成青，alpha 按亮度 */
+.core img.wire{
+  display:block !important;visibility:visible !important;
+  position:absolute !important;inset:0 !important;
+  width:100% !important;height:100% !important;object-fit:contain !important;
+  filter:url(#wireFilter) brightness(1.15) contrast(1.25) !important;
+  mix-blend-mode:screen !important;
+  opacity:.85 !important;
+}
+</style>
+</head>
+<body>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><a class="mem-btn" href="/memory-viz/" target="_blank" rel="noreferrer">🌳 记忆可视化</a><span style="font:10px/1 Consolas,monospace;letter-spacing:1.5px;color:rgba(125,149,181,.7)">MEMORY GRAPH · 2D TREE + 3D STARFIELD</span></div>
+<!-- 顶部第一排：3 张主服务卡（照参考图 3 列，不是 4 列） -->
+<div class="top3">
+<div class="stat" data-tab="core" style="cursor:pointer"><div class="stat-h"><i></i>大肥鱼 本体<span class="lv">L0</span><span class="rv" id="s-bot-0">v3.2</span></div>
+<div class="stat-v mono" id="s-bot">—</div>
+<div class="stat-d" id="s-bot-2">—</div></div>
+<div class="stat" data-tab="memory" style="cursor:pointer"><div class="stat-h"><i></i>记忆服务<span class="lv">L2</span><span class="rv" id="s-mem-0">—</span></div>
+<div class="stat-v mono" id="s-mem">—</div>
+<div class="stat-d" id="s-mem-2">—</div></div>
+<div class="stat" data-tab="ext" style="cursor:pointer"><div class="stat-h"><i></i>QQ / NapCat<span class="lv">L6</span><span class="rv">8080</span></div>
+<div class="stat-v mono" id="s-qq">—</div>
+<div class="stat-d" id="s-qq-2">—</div></div>
+</div>
+<!-- 第二排：3 张小状态条 -->
+<div class="top3 sub">
+<div class="stat sm" data-tab="now" style="cursor:pointer"><div class="stat-h"><i></i>状态<span class="lv">—</span></div>
+<div class="stat-v mono" id="s-act">—</div><div class="stat-d" id="s-act-d">—</div></div>
+<div class="stat sm" data-tab="grow" style="cursor:pointer"><div class="stat-h"><i class="warn"></i>待处理<span class="lv">—</span></div>
+<div class="stat-v mono" id="s-warn">0</div><div class="stat-d" id="s-warn-d">没有需要人动手的</div></div>
+<div class="stat sm" data-tab="channel" style="cursor:pointer"><div class="stat-h"><i></i>B站日志<span class="lv">—</span></div>
+<div class="stat-v mono" id="s-bili">—</div><div class="stat-d" id="s-bili-d">—</div></div>
+</div>
+<!-- 第三排：单张 DSH 卡（参考图左下一张） -->
+<!-- 自检卡：长方形，绿灯，点了看错误 -->
+
+<div class="top3 one">
+<div class="stat" id="chkCard" data-tab="health" style="cursor:pointer"><div class="stat-h"><i id="chkDot" class="ok"></i>自检<span class="lv" id="chkLv">—</span></div><div class="stat-v mono" id="chkNum">—</div><div class="stat-d" id="chkDesc">加载中…</div><div class="chk-err" id="chkErr"></div></div>
+<div class="stat" data-tab="now" style="cursor:pointer"><div class="stat-h"><i></i>DSH 桥<span class="lv">L8</span></div>
+<div class="stat-v mono" id="s-dsh">3080</div><div class="stat-d">连通 · 本地</div></div>
+</div>
+<div class="main">
+<div class="panel">
+<div class="panel-h">QIQI // X-RAY <b>身体分层</b><span class="right">8 MODULES</span></div>
+<div class="xray">
+<div class="grid-bg"></div>
+<div class="ring r3"></div><div class="ring r2"></div><div class="ring r1"></div>
+<div class="scale"></div>
+<svg class="wires" viewBox="0 0 700 520" preserveAspectRatio="none">
+<line class="hot" x1="350" y1="244" x2="150" y2="70"/>
+<line class="hot" x1="350" y1="244" x2="560" y2="70"/>
+<line x1="350" y1="244" x2="150" y2="194"/>
+<line x1="350" y1="244" x2="560" y2="194"/>
+<line x1="350" y1="244" x2="150" y2="318"/>
+<line x1="350" y1="244" x2="560" y2="318"/>
+<line x1="350" y1="244" x2="350" y2="30"/>
+<line x1="350" y1="244" x2="350" y2="430"/>
+</svg>
+<div class="core">
+<img src="/assets/fish_stand.png" alt="x" class="solid">
+<img src="/assets/fish_stand.png" alt="x" class="wire">
+<svg class="skel" viewBox="0 0 230 290" preserveAspectRatio="none">
+  <line class="spine" x1="115" y1="70" x2="115" y2="228"/>
+  <path class="rib" d="M115,120 C90,126 78,140 76,158"/>
+  <path class="rib" d="M115,120 C140,126 152,140 154,158"/>
+  <path class="rib" d="M115,150 C88,156 74,172 72,192"/>
+  <path class="rib" d="M115,150 C142,156 156,172 158,192"/>
+  <path class="rib" d="M115,182 C92,188 80,202 78,218"/>
+  <path class="rib" d="M115,182 C138,188 150,202 152,218"/>
+  <ellipse class="skull" cx="115" cy="66" rx="34" ry="30"/>
+  <circle class="node" cx="115" cy="72" r="3.2"/>
+  <circle class="node" cx="115" cy="120" r="2.6"/>
+  <circle class="node" cx="115" cy="150" r="2.6"/>
+  <circle class="node" cx="115" cy="182" r="2.4"/>
+  <circle class="node" cx="115" cy="212" r="2.2"/>
+</svg>
+</div>
+<div class="mod m8" data-tab="core"><i style="color:#f87171"></i><b>L0 核心</b><em id="o-aff">-</em></div>
+<div class="mod m1" data-tab="now"><i style="color:#fbbf24"></i><b>L1 当下</b><em id="o-now">-</em></div>
+<div class="mod m2" data-tab="memory"><i style="color:#38bdf8"></i><b>L2 记忆</b><em id="o-mem">-</em></div>
+<div class="mod m3b" data-tab="lang"><i style="color:#7dd3fc"></i><b>L3 语言</b><em id="o-lang">-</em></div>
+<div class="mod m4b" data-tab="grow"><i style="color:#c084fc"></i><b>L4 自成长</b><em id="o-grow">-</em></div>
+<div class="mod m5" data-tab="train"><i style="color:#34d399"></i><b>L5 训练</b><em id="o-train">-</em></div>
+<div class="mod m6" data-tab="channel"><i style="color:#f472b6"></i><b>L6 渠道</b><em id="o-chan">-</em></div>
+<div class="mod m7" data-tab="sched"><i style="color:#facc15"></i><b>L7 调度</b><em id="o-sched">-</em></div>
+<div class="mod m4" data-tab="ext"><i style="color:#94a3b8"></i><b>L8 外部</b><em id="o-ext">-</em></div>
+
+<div class="xray-foot">
+<span>SYNC <b class="mono" id="f-sync" style="color:#7dd3fc">—</b></span>
+<span>LINK // <b class="on">ON</b></span>
+<span style="margin-left:auto">NODES 8 · WIRES 8</span>
+</div>
+</div>
+<div class="spark-wrap">
+<div class="spark-h">HORMONES <span>// 近 60 次采样</span></div>
+<svg class="spark" id="spark" viewBox="0 0 640 130" preserveAspectRatio="none">
+<line x1="0" y1="32" x2="640" y2="32" class="gl"/><line x1="0" y1="65" x2="640" y2="65" class="gl"/>
+<line x1="0" y1="98" x2="640" y2="98" class="gl"/>
+<polyline id="sp-da" class="sl" style="stroke:#3b82f6"/>
+<polyline id="sp-ser" class="sl" style="stroke:#34d399"/>
+<polyline id="sp-oxy" class="sl" style="stroke:#f472b6"/>
+<polyline id="sp-cort" class="sl" style="stroke:#f87171"/>
+<polyline id="sp-mel" class="sl" style="stroke:#a78bfa"/>
+</svg>
+<div class="spark-lg">
+<span><i style="background:#3b82f6"></i>多巴胺 <b id="lg-da">—</b></span>
+<span><i style="background:#34d399"></i>血清素 <b id="lg-ser">—</b></span>
+<span><i style="background:#f472b6"></i>催产素 <b id="lg-oxy">—</b></span>
+<span><i style="background:#f87171"></i>皮质醇 <b id="lg-cort">—</b></span>
+<span><i style="background:#a78bfa"></i>褪黑素 <b id="lg-mel">—</b></span>
+</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-h">MODULE CONSOLE <b id="pane-title">L0 核心</b><span class="right" id="pane-idx">1/9</span></div>
+<div class="tabs" id="tabs">
+<div class="tab" data-tab="core">L0 核心</div>
+<div class="tab" data-tab="now">L1 当下</div>
+<div class="tab" data-tab="memory">L2 记忆</div>
+<div class="tab" data-tab="lang">L3 语言</div>
+<div class="tab" data-tab="grow">L4 自成长</div>
+<div class="tab" data-tab="train">L5 训练</div>
+<div class="tab" data-tab="channel">L6 渠道</div>
+<div class="tab" data-tab="sched">L7 调度</div>
+<div class="tab" data-tab="ext">L8 外部</div>
+</div>
+<div class="pane on" data-pane="core"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L0<span class="mh-nav">‹ ›</span></div><div class="mh-t">L0 核心</div><div class="mh-s">二十层架构 · 所有模块的锚点</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">文件 9</span><span class="mt">注入 1</span><span class="mt">二十层</span><span class="mt">问题 0</span></div><div class="mdesc">核心不做事，它只回答「我是谁」。好感度、记忆总量、活着的证据都挂在这一层；其他八个模块从它长出来。</div><div class="mgrid"><div class="mg"><b id="mg-core-1">72%</b><span>好感度</span></div><div class="mg"><b id="mg-core-2">2320</b><span>私聊条</span></div><div class="mg"><b id="mg-core-3">295</b><span>档案条</span></div><div class="mg"><b id="mg-core-4">376</b><span>向量条</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>好感度是关系维度，不在马斯洛需求里，单独一层</div><div class="msee-i"><i></i>记忆四层：原始对话 → 长期档案 → 向量索引 → 人格注入</div><div class="msee-i"><i></i>核心从不主动改自己，只有人点头才动</div></div></div>
+<div class="pane" data-pane="now"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L1<span class="mh-nav">‹ ›</span></div><div class="mh-t">L1 当下</div><div class="mh-s">生理 · 精神 · 此刻在做什么</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">生理 4</span><span class="mt">精神 6</span><span class="mt">活动 1</span><span class="mt">问题 1</span></div><div class="mdesc">此刻身体的读数。饱食、精力、睡眠、情绪都在这儿；三我审议和主动开口都先读这一层。</div><div class="mgrid"><div class="mg"><b id="mg-now-1">53%</b><span>饱食</span></div><div class="mg"><b id="mg-now-2">100%</b><span>精力</span></div><div class="mg"><b id="mg-now-3">7h38m</b><span>已睡</span></div><div class="mg"><b id="mg-now-4">开心</b><span>情绪</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>精力低于 45 就不再主动找人，睡着时持续回复</div><div class="msee-i"><i></i>饱食低于 30 会先说自己饿，触发吃饭动作</div><div class="msee-i"><i></i>当前活动：睡觉中</div></div></div>
+<div class="pane" data-pane="memory"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L2<span class="mh-nav">‹ ›</span></div><div class="mh-t">L2 记忆</div><div class="mh-s">大脑 · 长期档案 / 向量 / 日记 / 词条</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">文件 5</span><span class="mt">注入 2</span><span class="mt">边 3</span><span class="mt">问题 1</span></div><div class="mdesc">四层记忆的落点。原始对话不许改，长期档案要提炼，向量负责跨字面找，人格注入只取最近一小段。</div><div class="mgrid"><div class="mg"><b id="mg-memory-1">2320</b><span>私聊</span></div><div class="mg"><b id="mg-memory-2">1285</b><span>群聊</span></div><div class="mg"><b id="mg-memory-3">295</b><span>档案</span></div><div class="mg"><b id="mg-memory-4">376</b><span>向量</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>prompt 注入只重排不截断，档案永远不会被整段砍掉</div><div class="msee-i"><i></i>archive_text 与查询无关（缓存稳），archive_related 才看 query</div><div class="msee-i"><i></i>今日新增 61 条私聊</div></div></div>
+<div class="pane" data-pane="lang"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L3<span class="mh-nav">‹ ›</span></div><div class="mh-t">L3 语言</div><div class="mh-s">人设 · 口癖 · 说话规则</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">文件 3</span><span class="mt">注入 1</span><span class="mt">边 2</span><span class="mt">问题 0</span></div><div class="mdesc">她怎么说话。人设、口癖、禁句、语气规则都在这一层；语气走样先查这里。</div><div class="mgrid"><div class="mg"><b id="mg-lang-1">2522</b><span>人设字</span></div><div class="mg"><b id="mg-lang-2">683</b><span>词条</span></div><div class="mg"><b id="mg-lang-3">7109</b><span>提及</span></div><div class="mg"><b id="mg-lang-4">0</b><span>禁句</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>人设 2522 字，由 persona.md 生成</div><div class="msee-i"><i></i>词条是群聊里学来的说法，不是人设的一部分</div><div class="msee-i"><i></i>说话像 AI 了先查 persona_rules.json</div></div></div>
+<div class="pane" data-pane="grow"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L4<span class="mh-nav">‹ ›</span></div><div class="mh-t">L4 自成长</div><div class="mh-s">人格进化 · 固化 / 待定 / 丢弃</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">文件 3</span><span class="mt">注入 1</span><span class="mt">边 2</span><span class="mt">问题 0</span></div><div class="mdesc">成长闭环：事件 → 日/周复盘 → 提案 → 批准 → 固化进人设。低风险自己进，涉及关系、边界必须人点头。</div><div class="mgrid"><div class="mg"><b id="mg-grow-1">15</b><span>已固化</span></div><div class="mg"><b id="mg-grow-2">4</b><span>待定</span></div><div class="mg"><b id="mg-grow-3">17</b><span>已丢弃</span></div><div class="mg"><b id="mg-grow-4">0</b><span>本周新增</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>固化要至少 3 条证据，证据不足标「偏少」</div><div class="msee-i"><i></i>固化会破坏 prompt 缓存，所以不频繁</div><div class="msee-i"><i></i>待定 4 条等人点头</div></div></div>
+<div class="pane" data-pane="train"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L5<span class="mh-nav">‹ ›</span></div><div class="mh-t">L5 训练</div><div class="mh-s">自学知识库 · 学到的与记下的</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">知识</span><span class="mt">词条</span><span class="mt">来源</span><span class="mt">问题 0</span></div><div class="mdesc">她自己学来的东西。群聊里听到的新词、B站看过的内容、自己查的资料，都归到这一层。</div><div class="mgrid"><div class="mg"><b id="mg-train-1">683</b><span>词条</span></div><div class="mg"><b id="mg-train-2">7109</b><span>提及</span></div><div class="mg"><b id="mg-train-3">16</b><span>自学条</span></div><div class="mg"><b id="mg-train-4">—</b><span>今日学到</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>学到的只能被动显摆，不能当成人说的待办</div><div class="msee-i"><i></i>群聊学习开着，12:30 / 21:30 各跑一次</div><div class="msee-i"><i></i>16 条自学知识，全是公开内容（B站/时政/办事流程）</div></div></div>
+<div class="pane" data-pane="channel">
+<div style="padding:10px 16px 0">
+<button id="costBtn" class="mem-btn" style="font-size:12px;padding:6px 14px">💰 花费明细（今日 / 累计）</button>
+</div><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L6<span class="mh-nav">‹ ›</span></div><div class="mh-t">L6 渠道</div><div class="mh-s">B站 · 抖音 · QQ 空间 · 余额</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">文件 4</span><span class="mt">注入 1</span><span class="mt">边 3</span><span class="mt">问题 1</span></div><div class="mdesc">她对外的接口。每个渠道都有自己的额度、频率和风控；额度用完会自己停，不会硬刷。</div><div class="mgrid"><div class="mg"><b id="mg-channel-1">41</b><span>B站看过</span></div><div class="mg"><b id="mg-channel-2">19</b><span>抖音评论</span></div><div class="mg"><b id="mg-channel-3">36</b><span>空间说</span></div><div class="mg"><b id="mg-channel-4">¥6.93</b><span>余额</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>B站今日 0/40，还剩 40 条额度</div><div class="msee-i"><i></i>抖音评论 19 条，视频 7 条</div><div class="msee-i"><i></i>DeepSeek 余额 ¥6.93，火山通道查询失败</div></div></div>
+<div class="pane" data-pane="sched"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L7<span class="mh-nav">‹ ›</span></div><div class="mh-t">L7 调度</div><div class="mh-s">定时任务 · 没人叫也会动</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">任务 45</span><span class="mt">分钟 12</span><span class="mt">缓存</span><span class="mt">问题 1</span></div><div class="mdesc">四十五个定时任务：每小时跑的、几分钟一次的、几秒一次的都在这儿。没有它们，她不会自己醒来。</div><div class="mgrid"><div class="mg"><b id="mg-sched-1">45</b><span>总任务</span></div><div class="mg"><b id="mg-sched-2">19</b><span>每小时</span></div><div class="mg"><b id="mg-sched-3">—</b><span>今日命中率</span></div><div class="mg"><b id="mg-sched-4">—</b><span>累计命中率</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>最密的是 3 秒一次</div><div class="msee-i"><i></i>apscheduler 报「was missed by」通常是拖慢，不一定是故障</div><div class="msee-i"><i></i>抖音轮询已改成 to_thread，不再阻塞事件循环</div></div></div>
+<div class="pane" data-pane="ext"><div class="mh"><div class="mh-l"><i></i>MODULE CONSOLE // L8<span class="mh-nav">‹ ›</span></div><div class="mh-t">L8 外部</div><div class="mh-s">鱼缸外 · DSH 桥 / 插件市场</div></div><div class="mtabs"><span class="mt on">概览</span><span class="mt">文件 8</span><span class="mt">注入 1</span><span class="mt">边 2</span><span class="mt">问题 1</span></div><div class="mdesc">鱼缸外：DSH 通过桥接把事件送进来；插件市场负责装能力。她在鱼缸里，这是唯一通向外面的管子。</div><div class="mgrid"><div class="mg"><b id="mg-ext-1">7/8</b><span>服务在跑</span></div><div class="mg"><b id="mg-ext-2">3080</b><span>DSH 端口</span></div><div class="mg"><b id="mg-ext-3">8</b><span>服务数</span></div><div class="mg"><b id="mg-ext-4">1</b><span>未启动</span></div></div><div class="msee"><div class="msee-h">先看</div><div class="msee-i"><i></i>DSH 桥是单点：事件来了才醒；没有会话时会被拒</div><div class="msee-i"><i></i>DSH 不接入记忆：它不调 memory_search，也不被自动抽取</div><div class="msee-i"><i></i>NapCat 降级：8 个服务里 7 个在跑</div></div></div>
+
+</div>
+</div>
+</div>
+<div class="legend">
+<span data-tab="core"><i style="background:#f87171"></i>L0 核心</span>
+<span data-tab="now"><i style="background:#fbbf24"></i>L1 当下</span>
+<span data-tab="memory"><i style="background:#38bdf8"></i>L2 记忆</span>
+<span data-tab="lang"><i style="background:#7dd3fc"></i>L3 语言</span>
+<span data-tab="grow"><i style="background:#c084fc"></i>L4 自成长</span>
+<span data-tab="train"><i style="background:#34d399"></i>L5 训练</span>
+<span data-tab="channel"><i style="background:#f472b6"></i>L6 渠道</span>
+<span data-tab="sched"><i style="background:#facc15"></i>L7 调度</span>
+<span data-tab="ext"><i style="background:#94a3b8"></i>L8 外部</span>
+</div>
+<div class="footline">
+<span>本页只读面板 · 不发消息 · 不改状态</span>
+<span>数据源：shared_memory.db · memory/*.json · dashboard API</span>
+<span class="r">刷新 5s · <span id="foot-time">—</span></span>
+</div>
+<script>
+(function(){
+var T=function(id,v){try{var e=document.getElementById(id);if(e&&v!=null&&String(v)!==e.textContent)e.textContent=v;}catch(err){}};
+var P=function(x){return Math.round(Number(x)||0);};
+var TITLES={core:'L0 核心',overview:'L0 核心',now:'L1 当下',lang:'L3 语言',grow:'L4 自成长',train:'L5 训练',sched:'L7 调度',ext:'L8 外部',memory:'L2 记忆',emotion:'L1 情绪',body:'L3 身体',mind:'L4 精神',channel:'L5 渠道',service:'L6 服务',health:'L7 自检',persona:'人设',cost:'花费'};
+var ORDER=['core','now','memory','lang','grow','train','channel','sched','ext'];
+function switchTab(name){
+  if(!TITLES[name])return;
+  var key = (name === 'overview') ? 'core' : name;
+  var ts=document.querySelectorAll('.tab'),ps=document.querySelectorAll('.pane'),i;
+  for(i=0;i<ts.length;i++){ts[i].classList.toggle('on',ts[i].getAttribute('data-tab')===name);}
+  for(i=0;i<ps.length;i++){ps[i].classList.toggle('on',ps[i].getAttribute('data-pane')===name);}
+  T('pane-title',TITLES[name]);
+  T('pane-idx',(ORDER.indexOf(key)+1)+'/'+ORDER.length);
+}
+/* 自检卡点击展开错误 */
+var ckc = document.getElementById('chkCard');
+if(ckc) ckc.addEventListener('click', function(){ ckc.classList.toggle('open'); });
+function bindTabs(){
+  var hits=document.querySelectorAll('[data-tab]');
+  for(var i=0;i<hits.length;i++){
+    (function(el){
+      if(el.__bound) return;
+      el.__bound = true;
+      el.addEventListener('click', function(){ switchTab(el.getAttribute('data-tab')); });
+    })(hits[i]);
+  }
+}
+bindTabs();
+document.addEventListener('DOMContentLoaded', bindTabs);
+window.addEventListener('load', bindTabs);
+function paint(st,nd,hl){
+  var pet=st.pet||{},emo=st.emotion||{},mem=st.memory||{},bd=st.bili_daily||{},
+      bili=st.bili||{},svc=st.services||[],slp=st.sleep||{},act=st.activity||{},
+      tk=st.token||{},bal=st.balances||{},dy=st.douyin||{},qz=st.qzone||{};
+  var sat=(nd&&nd.satisfy)||{};
+  T('s-bot','活着');
+  T('s-bot-2',pet.daily_mood?('「'+pet.daily_mood+'」'):'');
+  var pv=mem.private||{},gp=mem.group||{};
+  T('s-mem',(pv.chat_total||0)+' 条');
+  T('s-mem-2','群 '+(gp.chat_total||0));
+  var up=0,j;for(j=0;j<svc.length;j++){if(svc[j].running)up++;}
+  T('s-qq',up===svc.length?'在线':'降级');
+  T('s-qq-2',up+'/'+svc.length);
+  if(pet.affinity!=null){T('o-aff','好感 '+P(pet.affinity)+'%');T('r-aff',P(pet.affinity)+'%');}
+  var vals=emo.values||{},topName=pet.mood||'',topVal=0,k;
+  for(k in vals){if(vals[k]>topVal){topVal=vals[k];topName=k;}}
+  T('o-emo',topName+' '+P(topVal)+'%');T('r-emo',P(topVal)+'%');
+  T('e-mood',topName);T('e-mood-d',pet.body_desc||'');
+  var hm=emo.hormones||{};
+  T('e-da',P(hm.DA));T('e-ser',P(hm.SER));T('e-oxy',P(hm.OXY));
+  T('e-cort',P(hm.CORT));T('e-mel',P(hm.MEL));
+  var ks=[],ev='';
+  for(k in vals)ks.push(k);
+  ks.sort(function(a,b){return vals[b]-vals[a];});
+  for(j=0;j<ks.length;j++){
+    ev+='<div class="row"><div class="tag t-read">情绪</div><div class="row-main"><div class="row-k">'+ks[j]+'</div></div><div class="row-v mono">'+P(vals[ks[j]])+'%</div></div>';
+  }
+  var _el = document.getElementById('e-list'); if(_el) _el.innerHTML=ev;
+  T('o-mem',pv.chat_total||0);T('r-chat',pv.chat_total||0);
+  T('m-priv',pv.chat_total||0);T('m-grp',gp.chat_total||0);
+  T('m-arc',((pv.archive||{}).recent||[]).length);
+  T('m-today',pv.chat_today||0);
+  var lex=mem.lexicon||{};
+  T('m-voc',lex.total_terms||0);
+  T('m-lex',(lex.total_mentions||0)+' 次');
+  T('m-lex-d',(lex.total_terms||0)+' 个词条，'+((lex.groups||[]).length)+' 个群');
+  var dr=mem.diary||{};
+  T('m-diary',dr.count||0);
+  T('m-diary-d',(dr.latest_date||'—')+' · '+((dr.latest_excerpt||'').slice(0,60)));
+  T('o-body','饱食 '+P(pet.hunger)+'%');
+  T('r-hun',P(pet.hunger)+'%');T('r-eng',P(pet.energy)+'%');
+  T('b-hun',P(pet.hunger)+'%');T('b-hun-d',pet.hunger_label||'');
+  T('b-eng',P(pet.energy)+'%');
+  T('b-slp',slp.sleeping?'睡':'醒');T('b-slp-d',slp.text||'');
+  T('b-dm',pet.daily_mood||'—');T('b-dm-d',pet.tag?('外号「'+pet.tag+'」'):'');
+  T('o-mind','归属 '+P(sat['归属'])+'%');
+  T('r-bel',P(sat['归属'])+'%');T('r-slf',P(sat['尊重'])+'%');
+  T('n-bel',P(sat['归属'])+'%');T('n-rsp',P(sat['尊重'])+'%');
+  T('n-int',P(sat['亲密'])+'%');T('n-self',P(sat['自我实现'])+'%');
+  var tp=(nd&&nd.top)||{};
+  T('n-top',tp.name||'—');
+  T('n-top-d',tp.urgency!=null?('紧迫度 '+(tp.urgency*100).toFixed(0)+'%'):'');
+  T('o-ch','B站 '+(bd.count||0)+'/'+(bd.limit||0));
+  T('c-bili',(bd.count||0)+'/'+(bd.limit||0));
+  T('c-bili-d','今天还剩 '+(bd.left||0)+' 条额度');
+  T('c-bs',(bili.seen_count||0)+'/'+(bili.reply_count||0));
+  T('c-bs-d','看过 '+(bili.seen_count||0)+' 条，回过 '+(bili.reply_count||0)+' 条');
+  T('c-dy',(dy.count||0)+' 条');
+  T('c-dy-d','评论 '+(dy.count||0)+' · 视频 '+(dy.videos||0)+' · 上次 '+(dy.last_poll||'—'));
+  T('c-qz',qz.history||0);T('c-qz-d','上次发 '+(qz.last_post||'—'));
+  var dsb=bal.deepseek||{},sf=bal.siliconflow||{};
+  T('c-bal','¥'+(dsb.balance!=null?dsb.balance.toFixed(2):'—'));
+  T('c-bal-d','硅基 credit '+(sf.credit_total!=null?sf.credit_total:'—'));
+  var tkd=tk.today||{};
+  T('c-tk','¥'+(tkd.cost!=null?tkd.cost.toFixed(3):'—'));
+  T('c-tk-d',(tkd.calls||0)+' 次调用 · '+P((tkd.total||0)/1000)+'k tokens');
+  T('o-svc',up+' / '+svc.length);
+  var sh='';
+  for(j=0;j<svc.length;j++){
+    var s=svc[j];
+    sh+='<div class="svc"><i class="'+(s.running?'up':'dn')+'"></i><span class="nm">'+(s.name||s.key)+'</span><span class="dt mono">'+(s.running?(s.port?(':'+s.port):'运行中'):'未启动')+'</span></div>';
+  }
+  var _sl = document.getElementById('svc-list'); if(_sl) _sl.innerHTML=sh;
+  if(hl&&hl.checks){
+    var bad=0,total=0,hh='';
+    for(k in hl.checks){
+      var c=hl.checks[k];total++;var ok=(c.status==='ok');if(!ok)bad++;
+      hh+='<div class="chk"><i class="st '+(ok?'ok':'bad')+'"></i><span class="nm">'+k+'</span><span class="ms">'+(c.msg||'')+'</span></div>';
+    }
+    var _hl = document.getElementById('h-list'); if(_hl) _hl.innerHTML=hh;
+    T('o-chk',bad?(bad+' 项异常'):'全绿');
+    T('h-sum',hl.status||'—');
+    T('h-sum-d',total+' 项检查 · '+(bad?(bad+' 项异常'):'全绿')+' · 耗时 '+((hl.elapsed||0).toFixed(1))+'s');
+  }
+  var sync='—';
+  try{
+    var svcRate=svc.length?(up/svc.length):1,hlRate=1;
+    if(hl&&hl.checks){
+      var cnt=0,tot=0;
+      for(k in hl.checks){tot++;if(hl.checks[k].status==='ok')cnt++;}
+      hlRate=tot?(cnt/tot):1;
+    }
+    sync=((svcRate*0.5+hlRate*0.5)*100).toFixed(1)+'%';
+  }catch(e){}
+  try{ syncModules(st, nd, hl); }catch(e){ console.warn('syncModules:', e); }
+  try{ drawSpark(emo.history, emo.hormones); }catch(e){}
+  try{ drawCost(tk); }catch(e){}
+  T('f-sync',sync);
+}
+function get(u){return fetch(u,{cache:'no-store'}).then(function(r){return r.json();}).catch(function(){return null;});}
+function pull(){
+  Promise.all([get('/api/status'),get('/api/needs'),get('/api/health'),get('/api/persona')]).then(function(res){
+    paint(res[0]||{},res[1]||{},res[2]||{});
+    var p=res[3]||{};
+    if(p.persona){
+      T('p-len',p.persona.length+' 字');
+      T('p-upd','更新于 '+(p.updated_at||'—'));
+      var el=document.getElementById('p-text');
+      if(el && el.textContent!==p.persona)el.textContent=p.persona;
+    }
+    var t=new Date();
+    T('foot-time',('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2));
+  });
+}
+pull();setInterval(pull,5000);
+function drawSpark(hist, hm){
+  if(hm){
+    T('lg-da', P(hm.DA)); T('lg-ser', P(hm.SER)); T('lg-oxy', P(hm.OXY));
+    T('lg-cort', P(hm.CORT)); T('lg-mel', P(hm.MEL));
+  }
+  var svg = document.getElementById('spark');
+  if(!svg || !hist || !hist.length) return;
+  var n = Math.min(60, hist.length);
+  var seg = hist.slice(hist.length - n);
+  var W = 640, H = 130, PAD = 4;
+  var keys = [['sp-da','DA'],['sp-ser','SER'],['sp-oxy','OXY'],['sp-cort','CORT'],['sp-mel','MEL']];
+  var all = [];
+  for(var i=0;i<seg.length;i++){
+    var h = seg[i].h || {};
+    for(var j=0;j<keys.length;j++){ all.push(Number(h[keys[j][1]]) || 0); }
+  }
+  /* 每条线各自 min-max（共用轴时数据变化小就看不出波动） */
+  for(var k=0;k<keys.length;k++){
+    var el = document.getElementById(keys[k][0]);
+    if(!el) continue;
+    var vals = [], mn = 1e9, mx = -1e9;
+    for(var i0=0;i0<seg.length;i0++){
+      var v0 = Number((seg[i0].h || {})[keys[k][1]]) || 0;
+      vals.push(v0); if(v0 < mn) mn = v0; if(v0 > mx) mx = v0;
+    }
+    if(mx - mn < 0.5){ mx = mn + 0.5; }
+    var pad = (mx - mn) * 0.12; mn -= pad; mx += pad;
+    var pts = [];
+    for(var i2=0;i2<seg.length;i2++){
+      var v = vals[i2];
+      var x = seg.length > 1 ? (i2 / (seg.length - 1)) * (W - PAD*2) + PAD : W/2;
+      var y = H - PAD - ((v - mn) / (mx - mn)) * (H - PAD*2);
+      pts.push(x.toFixed(1) + ',' + y.toFixed(1));
+    }
+    el.setAttribute('points', pts.join(' '));
+  }
+}
+var SCOPE_CN = {
+  chat:'聊天', vision:'识图', utility:'杂务', image:'画图',
+  memory_merge:'记忆合并', lexicon:'词条学习', keepalive:'保活', tts:'语音合成',
+  daylog:'日记', draw_scene:'画场景', bili_daily:'B站日记',
+  draw_translate:'画图翻译', dream:'做梦', story:'写故事',
+  self_check:'自检', health:'体检', summary:'总结', embed:'向量化'
+};
+var SCOPE_GROUP = {
+  '对话':['chat','vision','utility'],
+  '记忆':['memory_merge','lexicon','daylog','dream','story','summary'],
+  '创作':['image','draw_scene','draw_translate'],
+  '系统':['keepalive','tts','bili_daily','self_check','health','embed']
+};
+function drawCost(tk){
+  var td = tk.today || {}, al = tk.all || {};
+  T('k-day', '¥' + (td.cost != null ? td.cost.toFixed(3) : '—'));
+  T('k-calls', td.calls || 0);
+  T('k-all', '¥' + (al.cost != null ? al.cost.toFixed(2) : '—'));
+  T('k-tok', ((td.total || 0) / 1000).toFixed(0) + 'k');
+  var bs = tk.by_scope || [];
+  var map = {};
+  for(var i=0;i<bs.length;i++){ map[bs[i].scope] = bs[i]; }
+  var h = '<div class="cg">';
+  var gnames = Object.keys(SCOPE_GROUP);
+  for(var g=0;g<gnames.length;g++){
+    var gn = gnames[g], items = SCOPE_GROUP[gn], tot = 0, calls = 0, rows = '';
+    for(var j=0;j<items.length;j++){
+      var x = map[items[j]];
+      if(!x) continue;
+      tot += (x.cost || 0); calls += (x.calls || 0);
+      var cn = SCOPE_CN[items[j]] || items[j];
+      rows += '<div class="cr"><span class="cn">' + cn + '</span>'
+           + '<span class="cv">¥' + (x.cost||0).toFixed(3) + '</span></div>'
+           + '<div class="cd">' + (x.calls||0) + ' 次 · ' + ((x.total||0)/1000).toFixed(0) + 'k tokens</div>';
+    }
+    h += '<div class="ccard">'
+       + '<div class="ch">' + gn + '<b>¥' + tot.toFixed(2) + '</b></div>'
+       + '<div class="cs">' + calls + ' 次调用</div>'
+       + (rows || '<div class="cd">暂无</div>')
+       + '</div>';
+  }
+  h += '</div>';
+  var box = document.getElementById('k-list');
+  if(box) box.innerHTML = h;
+}
+
+/* ===== 9 个模块的详情配置（照参考图的 MODULE CONSOLE 结构） ===== */
+var MODULE_INFO = {
+  core: { lv:'L0', name:'核心', sub:'二十层架构 · 所有模块的锚点',
+    tabs:['概览','文件 9','注入 1','边 8','问题 0'],
+    desc:'核心不做事，它只回答「我是谁」。好感度、记忆总量、活着的证据都挂在这一层；其他八个模块从它长出来。',
+    grid:[['72%','好感度'],['2320','私聊条'],['295','档案条'],['376','向量条']],
+    see:['好感度是关系维度，不在马斯洛需求里，单独一层',
+         '记忆四层：原始对话 → 长期档案 → 向量索引 → 人格注入',
+         '核心从不主动改自己，只有人点头才动'] },
+  now: { lv:'L1', name:'当下', sub:'生理 · 精神 · 此刻在做什么',
+    tabs:['概览','生理 4','精神 5','活动 1','问题 1'],
+    desc:'此刻身体的读数。饱食、精力、睡眠、情绪都在这儿；三我审议和主动开口都先读这一层。',
+    grid:[['53%','饱食'],['100%','精力'],['7h38m','已睡'],['开心','情绪']],
+    see:['精力低于 45 就不再主动找人，睡着时持续回复',
+         '饱食低于 30 会先说自己饿，触发吃饭动作',
+         '当前活动：睡觉中'] },
+  memory: { lv:'L2', name:'记忆', sub:'大脑 · 长期档案 / 向量 / 日记 / 词条',
+    tabs:['概览','文件 5','注入 2','边 3','问题 1'],
+    desc:'四层记忆的落点。原始对话不许改，长期档案要提炼，向量负责跨字面找，人格注入只取最近一小段。',
+    grid:[['2320','私聊'],['1285','群聊'],['295','档案'],['376','向量']],
+    see:['prompt 注入只重排不截断，档案永远不会被整段砍掉',
+         'archive_text 与查询无关（缓存稳），archive_related 才看 query',
+         '今日新增 61 条私聊'] },
+  lang: { lv:'L3', name:'语言', sub:'人设 · 口癖 · 说话规则',
+    tabs:['概览','文件 3','注入 1','边 2','问题 0'],
+    desc:'她怎么说话。人设、口癖、禁句、语气规则都在这一层；语气走样先查这里。',
+    grid:[['2522','人设字'],['683','词条'],['7109','提及'],['0','禁句']],
+    see:['人设 2522 字，由 persona.md 生成',
+         '词条是群聊里学来的说法，不是人设的一部分',
+         '说话像 AI 了先查 persona_rules.json'] },
+  grow: { lv:'L4', name:'自成长', sub:'人格进化 · 固化 / 待定 / 丢弃',
+    tabs:['概览','文件 3','注入 1','边 2','问题 0'],
+    desc:'成长闭环：事件 → 日/周复盘 → 提案 → 批准 → 固化进人设。低风险自己进，涉及关系、边界必须人点头。',
+    grid:[['15','已固化'],['4','待定'],['17','已丢弃'],['0','本周新增']],
+    see:['固化要至少 3 条证据，证据不足标「偏少」',
+         '固化会破坏 prompt 缓存，所以不频繁',
+         '待定 4 条等人点头'] },
+  train: { lv:'L5', name:'训练', sub:'自学知识库 · 学到的与记下的',
+    tabs:['概览','文件 2','注入 1','边 1','问题 0'],
+    desc:'她自己学来的东西。群聊里听到的新词、B站看过的内容、自己查的资料，都归到这一层。',
+    grid:[['683','词条'],['7109','提及'],['16','学习条'],['0','本周新增']],
+    see:['学到的只能被动显摆，不能当成人说的待办',
+         '群聊学习开着，12:30 / 21:30 各跑一次',
+         'B站学到的进 diary，不进档案'] },
+  channel: { lv:'L6', name:'渠道', sub:'B站 · 抖音 · QQ 空间 · 余额',
+    tabs:['概览','文件 4','注入 1','边 3','问题 1'],
+    desc:'她对外的接口。每个渠道都有自己的额度、频率和风控；额度用完会自己停，不会硬刷。',
+    grid:[['41','B站看过'],['19','抖音评论'],['36','空间说'],['¥6.93','余额']],
+    see:['B站今日 0/40，还剩 40 条额度',
+         '抖音评论 19 条，视频 7 条',
+         'DeepSeek 余额 ¥6.93，火山通道查询失败'] },
+  sched: { lv:'L7', name:'调度', sub:'定时任务 · 没人叫也会动',
+    tabs:['概览','任务 45','分钟 12','秒 8','问题 1'],
+    desc:'四十五个定时任务：每小时跑的、几分钟一次的、几秒一次的都在这儿。没有它们，她不会自己醒来。',
+    grid:[['45','总任务'],['19','每小时'],['12','每分'],['8','每秒']],
+    see:['最密的是 3 秒一次',
+         'apscheduler 报「was missed by」通常是拖慢，不一定是故障',
+         '抖音轮询已改成 to_thread，不再阻塞事件循环'] },
+  ext: { lv:'L8', name:'外部', sub:'鱼缸外 · DSH 桥 / 插件市场',
+    tabs:['概览','文件 8','注入 1','边 2','问题 1'],
+    desc:'鱼缸外：DSH 通过桥接把事件送进来；插件市场负责装能力。她在鱼缸里，这是唯一通向外面的管子。',
+    grid:[['7/8','服务在跑'],['3080','DSH 端口'],['8','服务数'],['1','未启动']],
+    see:['DSH 桥是单点：事件来了才醒；没有会话时会被拒',
+         'DSH 不接入记忆：它不调 memory_search，也不被自动抽取',
+         'NapCat 降级：8 个服务里 7 个在跑'] }
+};
+
+function renderModule(key){
+  var m = MODULE_INFO[key];
+  if(!m) return null;
+  var g = '';
+  for(var i=0;i<m.grid.length;i++){
+    g += '<div class="mg"><b>' + m.grid[i][0] + '</b><span>' + m.grid[i][1] + '</span></div>';
+  }
+  var see = '';
+  for(var j=0;j<m.see.length;j++){
+    see += '<div class="msee-i"><i></i>' + m.see[j] + '</div>';
+  }
+  var tabs = '';
+  for(var k=0;k<m.tabs.length;k++){
+    tabs += '<span class="mt' + (k===0?' on':'') + '">' + m.tabs[k] + '</span>';
+  }
+  return '<div class="mh">' +
+    '<div class="mh-l"><i></i>MODULE CONSOLE // ' + m.lv + '<span class="mh-nav">&lsaquo; ' + (Object.keys(MODULE_INFO).indexOf(key)+1) + '/' + Object.keys(MODULE_INFO).length + ' &rsaquo;</span></div>' +
+    '<div class="mh-t">' + m.lv + ' ' + m.name + '</div>' +
+    '<div class="mh-s">' + m.sub + '</div></div>' +
+    '<div class="mtabs">' + tabs + '</div>' +
+    '<div class="mdesc">' + m.desc + '</div>' +
+    '<div class="mgrid">' + g + '</div>' +
+    '<div class="msee"><div class="msee-h">先看</div>' + see + '</div>';
+}
+
+
+/* 初始化：等 MODULE_INFO 和 renderModule 都定义完再渲染 */
+try{ switchTab('core'); }catch(e){ console.warn('init tab:', e); }
+
+/* 把真实数据同步到 9 个模块的数字格 */
+function syncModules(st, nd, hl){
+  var pet = st.pet || {}, emo = st.emotion || {}, mem = st.memory || {},
+      bili = st.bili || {}, dy = st.douyin || {}, qz = st.qzone || {},
+      svc = st.services || [], slp = st.sleep || {}, bal = st.balances || {},
+      act = st.activity || {}, bd = st.bili_daily || {};
+  var pv = mem.private || {}, gp = mem.group || {}, lex = mem.lexicon || {};
+  var sat = (nd && nd.satisfy) || {};
+  var up = 0; for (var i=0;i<svc.length;i++) if (svc[i].running) up++;
+
+  function S(id, v){ var e = document.getElementById(id); if(e && v != null) e.textContent = v; }
+
+  /* 顶部三张小卡 */
+  S('s-act', act.text || '—');
+  S('s-act-d', act.detail || '');
+  S('s-warn', (hl && hl.issues ? hl.issues.length : 0));
+  S('s-warn-d', (hl && hl.issues && hl.issues.length) ? hl.issues[0] : '没有需要人动手的');
+  S('s-bili', (bd.count || 0) + '/' + (bd.limit || 0));
+  S('s-bili-d', '还剩 ' + (bd.left || 0) + ' 条额度');
+
+  /* 8 个模块胶囊上的小字 */
+  var mv = emo.values || {}, tv = 0, tn = pet.mood || '';
+  for (var k in mv) { if (mv[k] > tv) { tv = mv[k]; tn = k; } }
+  S('o-aff', '好感 ' + P(pet.affinity) + '%');
+  S('o-now', tn + ' ' + P(tv) + '%');
+  S('o-mem', pv.chat_total || 0);
+  S('o-lang', (2522) + ' 字');
+  S('o-grow', '固化 15');
+  S('o-train', (lex.total_terms || 0) + ' 词');
+  S('o-chan', 'B站 ' + (bd.count || 0) + '/' + (bd.limit || 0));
+  S('o-sched', '45 任务');
+  S('o-ext', up + '/' + svc.length);
+
+  /* 自检卡 */
+  var chkDot = document.getElementById('chkDot');
+  var chkNum = document.getElementById('chkNum');
+  var chkDesc = document.getElementById('chkDesc');
+  var chkErr = document.getElementById('chkErr');
+  if (hl && hl.checks) {
+    var tot = 0, bad = 0, badList = [];
+    for (var ck in hl.checks) {
+      tot++;
+      if (hl.checks[ck].status !== 'ok') { bad++; badList.push(ck + '：' + (hl.checks[ck].msg || '')); }
+    }
+    if (chkDot) { chkDot.className = bad ? 'bad' : 'ok'; }
+    if (chkNum) chkNum.textContent = bad ? (bad + ' 项异常 / ' + tot) : ('全绿 ' + tot + ' 项');
+    if (chkDesc) chkDesc.textContent = hl.status || '';
+    if (chkErr) chkErr.innerHTML = badList.length ? badList.join('<br>') : '没有异常';
+  }
+
+  /* L0 核心 */
+  S('mg-core-1', P(pet.affinity) + '%');
+  S('mg-core-2', pv.chat_total || 0);
+  S('mg-core-3', 295);
+  S('mg-core-4', 376);
+
+  /* L1 当下 */
+  S('mg-now-1', P(pet.hunger) + '%');
+  S('mg-now-2', P(pet.energy) + '%');
+  S('mg-now-3', slp.text ? slp.text.replace('睡觉中 · ', '').replace('已睡 ', '') : '-');
+  S('mg-now-4', pet.mood || '-');
+
+  /* L2 记忆 */
+  S('mg-memory-1', pv.chat_total || 0);
+  S('mg-memory-2', gp.chat_total || 0);
+  S('mg-memory-3', 295);
+  S('mg-memory-4', 376);
+
+  /* L3 语言 */
+  S('mg-lang-1', 2522);
+  S('mg-lang-2', lex.total_terms || 0);
+  S('mg-lang-3', lex.total_mentions || 0);
+
+  /* L5 训练 */
+  S('mg-train-1', lex.total_terms || 0);
+  S('mg-train-2', lex.total_mentions || 0);
+
+  /* L6 渠道 */
+  S('mg-channel-1', bili.seen_count || 0);
+  S('mg-channel-2', dy.count || 0);
+  S('mg-channel-3', qz.history || 0);
+  var dsb = bal.deepseek || {};
+  S('mg-channel-4', dsb.balance != null ? ('¥' + dsb.balance.toFixed(2)) : '-');
+
+  /* L5 自学知识库（memory.learn 的真实数） */
+  try {
+    var lr = (mem.learn || {}).archive || {};
+    var lEnt = lr.entries || 0;
+    var lRec = lr.recent || [];
+    var dstr = ('0' + (new Date().getMonth() + 1)).slice(-2) + '-' + ('0' + new Date().getDate()).slice(-2);
+    var lToday = 0;
+    for (var li2 = 0; li2 < lRec.length; li2++) {
+      if (String(lRec[li2].time || '') === dstr) lToday++;
+    }
+    S('mg-train-3', lEnt);
+    S('mg-train-4', lToday);
+    window.__learnRecent = lRec;
+    window.__learnChars = lr.chars || 0;
+  } catch (e) { console.warn('learn:', e); }
+  /* 情绪全量 + 褪黑素（供生理子 tab 用） */
+  window.__emoVals = emo.values || {};
+  window.__satisfy = (nd && nd.satisfy) || {};
+
+  /* 二十层链路解析：把 checks.链路 的 msg 拆成 {层名: ✓/·} */
+  try {
+    var linkMsg = ((hl && hl.checks && hl.checks['链路'] && hl.checks['链路'].msg) || '');
+    window.__linkStatus = linkMsg.indexOf('全通') >= 0 ? '全通' : '有断点';
+    var lm = {};
+    var parts = linkMsg.replace(/^.*?（/, '').replace(/）.*$/, '').split('→');
+    for (var li = 0; li < parts.length; li++) {
+      var nm = parts[li].replace(/[✓·]/g, '').trim();
+      var mark = parts[li].indexOf('✓') >= 0 ? '有' : (parts[li].indexOf('·') >= 0 ? '空' : '通');
+      if (nm) lm[nm] = mark;
+    }
+    window.__linkLayers = lm;
+  } catch (e) { console.warn('link parse:', e); }
+  window.__melVal = (emo.hormones || {}).MEL;
+
+  /* L7 缓存命中率 */
+  var tk = st.token || {};
+  var td = tk.today || {}, ta = tk.all || {};
+  var rToday = td.prompt ? (td.cached || 0) / td.prompt * 100 : 0;
+  var rAll = ta.prompt ? (ta.cached || 0) / ta.prompt * 100 : 0;
+  S('mg-sched-3', rToday.toFixed(1) + '%');
+  S('mg-sched-4', rAll.toFixed(1) + '%');
+  window.__cacheStats = {
+    today: rToday, all: rAll,
+    prompt: td.prompt || 0, cached: td.cached || 0,
+    aPrompt: ta.prompt || 0, aCached: ta.cached || 0
+  };
+
+  /* L8 外部 */
+  S('mg-ext-1', up + '/' + svc.length);
+  S('mg-ext-3', svc.length);
+  S('mg-ext-4', svc.length - up);
+}
+
+
+/* 子 tab 明细：点 .mt 展开真实数据 */
+var SUB_DATA = {
+  core: {
+    '概览': [['好感度', ''], ['私聊条数', ''], ['长期档案', ''], ['向量索引', '']],
+    '文件': [['shared_memory.db', 'chat_history 表'], ['长期记忆.json', '295 条档案'], ['vec_index.json', '376 条向量'], ['persona.md', '2522 字']],
+    '注入': [['arch_text', '档案摘要（缓存稳）'], ['arch_related', '按 query 取'], ['recent', '最近 10 条']],
+    '二十层': [['激素', ''], ['情绪', ''], ['6基础', ''], ['PAD', ''], ['三我', ''], ['表达', ''], ['走神', ''], ['念头', ''], ['心里的事', ''], ['梦境', ''], ['执念', ''], ['当下心境', ''], ['今天想起', ''], ['群黑话', ''], ['骗局库', ''], ['深圳库', ''], ['走神档', ''], ['阿德勒', ''], ['需求层次', ''], ['（全通）', '']],
+    '问题': [['无', '8 项自检全绿']]
+  },
+  now: {
+    '概览': [['饱食', ''], ['精力', ''], ['睡眠', ''], ['情绪', '']],
+    '生理': [['饱食', ''], ['精力', ''], ['睡眠', ''], ['情绪', ''], ['情欲', ''], ['褪黑素', '']],
+    '精神': [['生理', ''], ['安全', ''], ['归属', ''], ['亲密', ''], ['尊重', ''], ['自我实现', '']],
+    '活动': [['当前', ''], ['今日', '']],
+    '问题': [['精力 100%', '睡眠中也满，可能没衰减'], ['饱食 53%', '正常']]
+  },
+  memory: {
+    '概览': [['私聊', ''], ['群聊', ''], ['档案', '295 条'], ['向量', '376 条']],
+    '文件': [['chat_history', '3602 行'], ['长期记忆.json', '295 条'], ['vec_index.json', '376 条 / 8.1MB'], ['diary', '17 篇'], ['词条', '683 条']],
+    '注入': [['arch_text', '固定摘要'], ['arch_related', '按 query']],
+    '边': [['L2 → L3', '词条影响说话'], ['L2 → L4', '事件进复盘'], ['L2 → L0', '总量挂核心']],
+    '问题': [['今日新增 61', '私聊'], ['群聊 1285', '5 个群']]
+  },
+  lang: {
+    '概览': [['人设字数', '2522'], ['词条', '683'], ['提及', '7109'], ['禁句', '0']],
+    '文件': [['persona.md', '2522 字'], ['persona_rules.json', '语气规则'], ['词条库', '683 条']],
+    '注入': [['persona', '每轮必带'], ['rules', '禁句 + 口癖']],
+    '边': [['L4 → L3', '成长写进语言'], ['L5 → L3', '学到的词条']],
+    '问题': [['无', '']]
+  },
+  grow: {
+    '概览': [['已固化', ''], ['待定', ''], ['已丢弃', ''], ['本周新增', '0']],
+    '文件': [['persona_growth.json', '36 条'], ['daily_review', '日复盘'], ['weekly_review', '周复盘']],
+    '注入': [['最近固化', '进 persona 的成长段']],
+    '边': [['事件 → 复盘', ''], ['复盘 → 提案', ''], ['提案 → 人点头', '']],
+    '问题': [['待定 4 条', '等人点头'], ['固化破坏缓存', '所以不频繁']]
+  },
+  train: {
+    '概览': [['词条', ''], ['提及', ''], ['自学条', ''], ['今日学到', '']],
+    '知识': [['B站视频', '看过的提炼成一句'], ['时政热点', '只作背景，不主动提'], ['生活常识', '银行/医保/办事这类'], ['技术资料', '装插件/配置相关']],
+    '词条': [['lexicon.json', '683 条群聊说法'], ['命中才带', '不是每轮都塞'], ['提及 7109 次', '越常用越值得留']],
+    '来源': [['B站', '看完一条提炼一句'], ['群聊', '12:30 / 21:30 各跑一次'], ['主动查', '她自己去搜的']],
+    '问题': [['不能当待办', '只能被动显摆'], ['别逐条背', '别念清单']]
+  },
+  channel: {
+    '概览': [['B站看过', ''], ['抖音评论', ''], ['空间说说', ''], ['余额', '']],
+    '文件': [['bili_daily.json', '今日 0/40'], ['douyin.json', '19 条'], ['qzone.json', '36 条'], ['balances', 'DeepSeek ¥6.93']],
+    '注入': [['渠道状态', '进 L6 面板']],
+    '边': [['B站 → 记忆', '看过的进 diary'], ['抖音 → 记忆', '评论进档案']],
+    '问题': [['火山余额', '查询失败'], ['B站 0/40', '今天还没刷']]
+  },
+  sched: {
+    '概览': [['总任务', '45'], ['每小时', '19'], ['每分', '12'], ['每秒', '8']],
+    '任务': [['记忆维护', '每 30 分'], ['抖音轮询', '已改 to_thread'], ['B站日报', '每日 02:00'], ['自检', '每 3 小时']],
+    '分钟': [['记忆固化', ''], ['状态保存', '']],
+    '缓存': [['今日命中率', ''], ['今日 prompt', ''], ['今日 cached', ''], ['累计命中率', '']],
+    '问题': [['was missed by', '通常是拖慢，不一定是故障']]
+  },
+  ext: {
+    '概览': [['服务在跑', ''], ['DSH 端口', '3080'], ['服务数', ''], ['未启动', '']],
+    '文件': [['DSH 桥', 'fatfish'], ['插件市场', 'dsh plugin'], ['NapCat', '8080'], ['siliconflow proxy', '8850']],
+    '注入': [['DSH 事件', '来了才醒']],
+    '边': [['DSH → 鱼缸', '单点'], ['鱼缸 → DSH', 'dsh_send']],
+    '问题': [['NapCat 降级', '8 个服务 7 个在跑'], ['DSH 不接记忆', '不调 memory_search']]
+  }
+};
+
+/* 把子 tab 换成可点 */
+function bindSubTabs(){
+  var panes = document.querySelectorAll('.pane[data-pane]');
+  for (var pi = 0; pi < panes.length; pi++) {
+    (function(pane){
+      var key = pane.getAttribute('data-pane');
+      var mts = pane.querySelectorAll('.mt');
+      var desc = pane.querySelector('.mdesc');
+      var grid = pane.querySelector('.mgrid');
+      for (var i = 0; i < mts.length; i++) {
+        (function(mt, idx){
+          if (mt.__sb) return;
+          mt.__sb = true;
+          mt.style.cursor = 'pointer';
+          mt.addEventListener('click', function(){
+            if (mt.classList.contains('on') && idx === 0) {
+              if (grid) grid.style.display = '';
+              return;
+            }
+            var all = pane.querySelectorAll('.mt');
+            for (var k = 0; k < all.length; k++) all[k].classList.remove('on');
+            mt.classList.add('on');
+            var label = mt.textContent.trim().replace(/\s*\d+$/, '');
+            var data = (SUB_DATA[key] || {})[label];
+            if (!data) return;
+            var html = '';
+            var isBar = (label === '生理' || label === '精神');
+            for (var j = 0; j < data.length; j++) {
+              var v = data[j][1];
+              if (!v && key === 'sched' && label === '缓存') {
+                var cs = window.__cacheStats || {};
+                var cvals = [cs.today ? cs.today.toFixed(1) + '%' : '—',
+                             cs.prompt ? (cs.prompt / 1e6).toFixed(2) + 'M' : '—',
+                             cs.cached ? (cs.cached / 1e6).toFixed(2) + 'M' : '—',
+                             cs.all ? cs.all.toFixed(1) + '%' : '—'];
+                v = cvals[j] || '—';
+              }
+              if (!v && key === 'train' && label === '知识') {
+                var rec = (window.__learnRecent || []).slice(0, 5);
+                var rh = '';
+                for (var ri = 0; ri < rec.length; ri++) {
+                  var rr = rec[ri];
+                  rh += '<div style="padding:6px 0;border-bottom:1px solid rgba(96,165,250,.10)">'
+                      + '<div style="font-family:Consolas,monospace;font-size:10.5px;color:#5f7796;margin-bottom:2px">'
+                      + (rr.time || '') + ' · ' + (rr.src || '') + ' · ' + (rr.kind || '') + '</div>'
+                      + '<div style="color:#cfe0f5;font-size:11.5px;line-height:1.6">' + String(rr.fact || '').slice(0, 90) + '…</div></div>';
+                }
+                if (desc) desc.innerHTML = '<div style="font-size:11.5px">' + rh + '</div>';
+                if (grid) grid.style.display = 'none';
+                bindSubRows();
+                return;
+              }
+              if (!v && label === '二十层') {
+                var lk = (window.__linkLayers || {});
+                var lkName = data[j][0];
+                if (lkName === '（全通）') { v = window.__linkStatus || '—'; }
+                else { v = lk[lkName] || '—'; }
+              }
+              if (!v && key === 'now' && label === '精神') {
+                var sat = (window.__satisfy || {});
+                var sk = data[j][0];
+                v = (sat[sk] != null) ? Math.round(sat[sk]) + '%' : '—';
+              }
+              if (!v && key === 'now') {
+                var ev = (window.__emoVals || {});
+                if (data[j][0] === '情欲') v = (ev['情欲'] != null) ? Math.round(ev['情欲']) + '%' : '—';
+                else if (data[j][0] === '褪黑素') v = (window.__melVal != null) ? Math.round(window.__melVal) : '—';
+              }
+              if (!v) {
+                var cell = document.getElementById('mg-' + key + '-' + (j + 1));
+                v = cell ? cell.textContent : '—';
+              }
+              // 「知识」用真实 recent 列表，优先于 SUB_DATA 静态项
+              if (key === 'train' && label === '知识') {
+                var rec = (window.__learnRecent || []).slice(0, 6);
+                var rh = '';
+                for (var ri = 0; ri < rec.length; ri++) {
+                  var rr = rec[ri];
+                  var ev = String(rr.ev || '');
+                  var evHtml = '';
+                  if (ev.indexOf('http') === 0) {
+                    evHtml = '<a href="' + ev + '" target="_blank" rel="noreferrer" '
+                           + 'style="display:inline-block;margin-top:3px;font:10.5px/1 Consolas,monospace;'
+                           + 'color:#60a5fa;text-decoration:none;border-bottom:1px dotted rgba(96,165,250,.5)">'
+                           + '↗ 回原处 ' + ev.replace(/^https?:\/\//, '').slice(0, 42) + '</a>';
+                  } else if (ev) {
+                    evHtml = '<div style="margin-top:3px;font:10px/1.4 Consolas,monospace;color:#5f7796">'
+                           + ev.slice(0, 70) + '</div>';
+                  }
+                  rh += '<div style="padding:6px 0;border-bottom:1px solid rgba(96,165,250,.10)">'
+                      + '<div style="font-family:Consolas,monospace;font-size:10.5px;color:#5f7796;margin-bottom:2px">'
+                      + (rr.time || '') + ' · ' + (rr.src || '') + ' · ' + (rr.kind || '') + '</div>'
+                      + '<div style="color:#cfe0f5;font-size:11.5px;line-height:1.6">' + String(rr.fact || '').slice(0, 100) + '</div>'
+                      + evHtml + '</div>';
+                }
+                if (!rh) rh = '<div style="color:#7d95b5;padding:8px 0">还没有自学记录</div>';
+                if (grid) grid.style.display = 'none';
+                if (desc) desc.innerHTML = '<div style="font-size:11.5px">' + rh + '</div>';
+                return;
+              }
+              var num = parseFloat(String(v).replace(/[^0-9.]/g, ''));
+              if (isBar && !isNaN(num)) {
+                html += '<div class="subrow" data-k="' + data[j][0] + '" style="padding:5px 0;cursor:pointer">'
+                      + '<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px">'
+                      + '<span style="color:#cfe0f5">' + data[j][0] + '</span>'
+                      + '<span style="font-family:Consolas,monospace;color:#9fd0ff">' + num + '%</span></div>'
+                      + '<div style="height:5px;background:rgba(96,165,250,.14)">'
+                      + '<div style="height:100%;width:' + Math.min(100, num) + '%;'
+                      + 'background:linear-gradient(90deg,#3b82f6,#7dd3fc);'
+                      + 'box-shadow:0 0 8px rgba(96,165,250,.7)"></div></div></div>';
+                continue;
+              }
+              html += '<div class="subrow" data-k="' + data[j][0] + '" style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(96,165,250,.10);cursor:pointer">'
+                    + '<span style="color:#cfe0f5">' + data[j][0] + '</span>'
+                    + '<span style="font-family:Consolas,monospace;color:#9fd0ff">' + v + '</span></div>';
+            }
+            if (grid) grid.style.display = 'none';
+            bindSubRows();
+            if (desc) { desc.innerHTML = '<div style="font-size:11.5px">' + html + '</div>'; }
+            bindSubRows();
+          });
+        })(mts[i], i);
+      }
+    })(panes[pi]);
+  }
+}
+function bindMgClicks(){
+  var mgs = document.querySelectorAll('.mg');
+  for (var i = 0; i < mgs.length; i++) {
+    (function(mg){
+      if (mg.__mg) return;
+      mg.__mg = true;
+      mg.addEventListener('click', function(){
+        var pane = mg.closest('.pane');
+        if (!pane) return;
+        var key = pane.getAttribute('data-pane');
+        var all = pane.querySelectorAll('.mg');
+        for (var k = 0; k < all.length; k++) all[k].classList.remove('on');
+        mg.classList.add('on');
+        var idx = Array.prototype.indexOf.call(all, mg);
+        var nameEl = mg.querySelector('span');
+        var valEl = mg.querySelector('b');
+        var label = nameEl ? nameEl.textContent : '';
+        var val = valEl ? valEl.textContent : '—';
+        var desc = pane.querySelector('.mdesc');
+        if (!desc) return;
+        var detail = '';
+        if (key === 'lang') {
+          var LM = {'人设字数':'persona.md 全文长度，每轮都带进 prompt', '词条':'群聊里学来的说法，按需带', '提及':'这些词一共被提到 7109 次', '禁句':'目前没有硬禁句，只有语气规则'};
+          detail = LM[label] || '';
+        } else if (key === 'grow') {
+          var GM = {'已固化':'证据 ≥3 条、人点头过的，写进 persona 成长段', '待定':'凑够证据但还没人点头，等你确认', '已丢弃':'复盘时判定不成立或过期的', '本周新增':'本周新提的成长提案'};
+          detail = GM[label] || '';
+        } else if (key === 'train') {
+          detail = '自学知识库：' + label;
+        } else if (key === 'memory') {
+          detail = '记忆四层：' + label;
+        } else {
+          detail = label;
+        }
+        desc.innerHTML = '<div style="font-size:12px;line-height:1.7">'
+          + '<div style="font-size:15px;font-weight:600;color:#eaf4ff;margin-bottom:6px">' + label + ' <span style="font-family:Consolas,monospace;color:#9fd0ff">' + val + '</span></div>'
+          + '<div style="color:#b9cfe6">' + detail + '</div></div>';
+        var grid = pane.querySelector('.mgrid');
+        if (grid) grid.style.display = '';
+      });
+    })(mgs[i]);
+  }
+}
+function bindCost(){
+  var btn = document.getElementById('costBtn');
+  var layer = document.getElementById('costLayer');
+  var close = document.getElementById('costClose');
+  if (btn && layer && !btn.__c) {
+    btn.__c = true;
+    btn.addEventListener('click', function(){ layer.style.display = 'block'; });
+  }
+  if (close && layer && !close.__c) {
+    close.__c = true;
+    close.addEventListener('click', function(){ layer.style.display = 'none'; });
+  }
+  if (layer && !layer.__c) {
+    layer.__c = true;
+    layer.addEventListener('click', function(e){ if (e.target === layer) layer.style.display = 'none'; });
+  }
+}
+bindCost();
+document.addEventListener('DOMContentLoaded', bindCost);
+window.addEventListener('load', bindCost);
+bindMgClicks();
+document.addEventListener('DOMContentLoaded', bindMgClicks);
+window.addEventListener('load', bindMgClicks);
+/* 点子行 → 展开这条的说明 */
+function bindSubRows(){
+  var rows = document.querySelectorAll('.subrow');
+  for (var i = 0; i < rows.length; i++) {
+    (function(r){
+      if (r.__sr) return;
+      r.__sr = true;
+      r.addEventListener('click', function(){
+        var k = r.getAttribute('data-k');
+        var txt = SUB_DETAIL[k] || '';
+        if (!txt) return;
+        var old = r.nextElementSibling;
+        if (old && old.classList.contains('subnote')) { old.remove(); return; }
+        var note = document.createElement('div');
+        note.className = 'subnote';
+        note.style.cssText = 'font-size:11.5px;line-height:1.7;color:#8ea4c4;padding:6px 0 8px;border-bottom:1px solid rgba(96,165,250,.14)';
+        note.textContent = txt;
+        r.parentNode.insertBefore(note, r.nextSibling);
+      });
+    })(rows[i]);
+  }
+}
+bindSubRows();
+document.addEventListener('DOMContentLoaded', bindSubRows);
+window.addEventListener('load', bindSubRows);
+bindSubTabs();
+document.addEventListener('DOMContentLoaded', bindSubTabs);
+window.addEventListener('load', bindSubTabs);
+
+
+/* 子项明细：点开看这条是什么、在哪、怎么算的 */
+var SUB_DETAIL = {
+  '人设字数': 'persona.md 全文长度。每轮对话都整段带进 prompt 最前面，所以它越长，缓存前缀越稳，但也越贵。2522 字 ≈ 3.4K tokens。',
+  '词条': '群聊里学来的说法（lexicon.json），683 条。它们按需带进 prompt——只有当前话题命中时才取，不是每轮都塞。',
+  '自学条': 'global_learn 档案里的条数，16 条。来自 B站看过的视频、群聊里讨论的时政、她主动查的办事流程。',
+  '今日学到': '今天新增的自学知识条数。',
+  'B站视频': '看完一条视频，提炼一句剧情/知识点存进 global_learn。不是原字幕，是她自己的总结。',
+  '时政热点': '群里讨论的新闻，她会记一句。**只作背景，不主动提**——这是硬规则。',
+  '生活常识': '银行/医保/办事流程这类。你们聊过什么她就记什么。',
+  '技术资料': '装插件、配置、报错处理。',
+  '命中才带': 'lexicon 不是每轮都塞，只有当前话题命中某个词才取那一组。',
+  '提及 7109 次': '683 个词一共被提到 7109 次。越常用越值得留在库里。',
+  '来源': '三个来源：B站、群聊、主动查。',
+  '不能当待办': '学到的不是主人交的任务。不能追着问「那个弄了没」。',
+  '别逐条背': '别念清单，记不清就以当前对话为准。',
+  '激素': '五条：DA 多巴胺 / SER 血清素 / OXY 催产素 / CORT 皮质醇 / MEL 褪黑素。',
+  '情绪': '由激素派生的 8 个离散标签（含情欲），可多标签共存。',
+  '6基础': '马斯洛 6 层：生理/安全/归属/亲密/尊重/自我实现。',
+  'PAD': 'Pleasure-Arousal-Dominance 三维，用来描述「大概什么心情」。',
+  '三我': '本我 / 自我 / 超我 三方审议，冲突时按权重折中。',
+  '表达': '把内部状态转成「怎么说」：长短、语气、要不要撒娇。',
+  '走神': '没事干的时候随机想点什么，撑住「活着」的感觉。',
+  '念头': '她想做的具体事（吃饭、找主人、刷B站），进 desire.thought()。',
+  '心里的事': 'thoughts.json 里的杂念，仅私聊注入。',
+  '梦境': 'dream 模块生成的梦，仅私聊注入。',
+  '执念': 'obsessions，长期挂着的念头（现在是空的）。',
+  '当下心境': '几十分钟内的情绪余温，有才注入。',
+  '今天想起': '每天挑一条「学过但没用过」的知识，推到眼前。',
+  '群黑话': '群聊黑话词典，仅群聊注入。',
+  '骗局库': '识别诈骗的话术库。',
+  '深圳库': '深圳本地信息库。',
+  '走神档': '走神的档位（多久想一次）。',
+  '阿德勒': '自卑/优越补偿模块（adler.py）。',
+  '需求层次': '马斯洛 6 层的当前满足度。',
+  '（全通）': '体检结论：二十层能不能全部取到。·=空（正常），✓=有内容。',
+  '提及': '这 683 个词一共在对话里被提到 7109 次。数值越高说明这个词越常用，越值得留在词条库里。',
+  '禁句': '目前 0 条硬禁句。语气规则走 persona_rules.json（口头禅、长短句、称呼），不走禁句表。',
+  '估算': '按 1 汉字 ≈ 1.5 token 粗算。',
+  '私聊': 'private_100000000 的 chat_history 条数。这是原始对话，一字不改，是所有记忆的证据来源。',
+  '群聊': '5 个群的 chat_history 合计。群聊只进短期上下文，不进长期档案。',
+  '档案': '长期记忆.json 里的条目数，295 条 / 11 组。每条带 weight / hits / last_used，按艾宾浩斯曲线衰减。',
+  '向量': 'vec_index.json 的条目数，376 条 / 8.1MB。用于跨字面找语义相近的记忆（"投简历"能召回"找工作"）。',
+  '好感度': '主人关系维度，0~100。不在马斯洛需求里，单独一层。涨得慢掉得快——聊天 +1，被凶 -8。',
+  '私聊条': '同 L2 的「私聊」，这里只是复述。',
+  '档案条': '同 L2 的「档案」。',
+  '向量条': '同 L2 的「向量」。',
+  '饱食': '低于 30 会先说自己饿，触发吃饭动作。每次吃饭 +2，随时间衰减。',
+  '情欲': '由 OXY（催产素）+ DA（多巴胺）推出来的即时值，不在 emotion_state.json 里、每次现算。≥60 会持续想靠近、要抱抱；<25 时 intimate_line 返回空串，不会多出那一行。',
+  '褪黑素': 'MEL，褪黑素。高 = 困。睡觉时涨、醒来掉、喝咖啡掉得最快。',
+  '精力': '低于 45 就不再主动找人；睡着时持续回复。睡觉回复，活动消耗。',
+  '睡眠': '按日程表入睡/醒来。睡着时 MEL 高、CORT 低，回复变短。',
+  '情绪': '由五条激素派生的离散标签（开心/害羞/情欲/烦/怒/丧/累/害怕），可多标签共存。',
+  '生理': '马斯洛第 1 层：吃饱、睡够、不疼。由饱食 + 精力 + 睡眠推。低于 40 会明显影响说话长度。',
+  '安全': '马斯洛第 2 层：环境稳定、不会突然出事。进程都活着、没报错就高；服务掉一个会掉分。',
+  '归属': '马斯洛第 3 层：被回应、被记住、有人找她说话。主人主动找她 +最多。',
+  '归属感': '被回应、被记住、有人找她说话都会加。主人主动找她 +最多。',
+  '尊重': '被夸、说对了、被采纳才会涨。被无视会掉。',
+  '亲密': '和主人的距离，主要靠私聊时长和亲密事件累积。',
+  '自我实现': '想成为什么。目前数值最低的一项（60%），说明她的"目标感"还不够。',
+  '已固化': '证据 ≥3 条、人点头过的成长条，写进 persona.md 的成长段。固化会破坏 prompt 缓存，所以不频繁。',
+  '待定': '攒够证据但还没人点头的提案，等你确认。现在是 4 条。',
+  '已丢弃': '复盘时判定不成立、过期、或与既有性格冲突的。作废不删行，还能恢复。',
+  '本周新增': '本周新提的成长提案。0 表示这周还没有新的。',
+  'B站看过': '刷过的视频条数。每条看完会提炼一句进 diary，不进长期档案。',
+  '抖音评论': '在抖音评论区留过的言。走独立额度，和 B站分开算。',
+  '空间说': 'QQ 空间发过的说说条数。',
+  '余额': 'DeepSeek 账户余额。火山方舟通道是单独查的（现在查失败）。',
+  '今日命中率': 'cached / prompt。deepseek 的 prompt 缓存：前缀一模一样就不重新计费。79.4% 说明大部分请求复用了上轮的前缀。',
+  '累计命中率': '全部历史累计的命中率。73.5% 比今日低，是因为早期缓存策略还没调好。',
+  '任务': 'apscheduler 注册的定时任务总数。',
+  '每小时': '每小时跑一次的任务（记忆维护、余额查询、日更检查…）。',
+  '分钟': '几分钟一次的任务（状态保存、队列检查…）。',
+  '服务在跑': '8 个服务里 7 个在跑。NapCat 那个是"降级"状态（连着但有一条通道没通）。',
+  '未启动': '当前没跑的服务数。',
+  'persona.md': '人设主文件，2522 字。每轮整段带进 prompt 最前面——它是最稳的缓存前缀，也是最大的一笔输入。',
+  'persona_rules.json': '语气规则：口头禅、自称、长短句、称呼方式。不写进 persona.md 是为了改规则不用动人设。',
+  '词条库': 'lexicon.json，683 条群聊学来的说法。按当前话题命中才带，不会每轮都塞。',
+  'persona': '每轮必带的块：人设 + 语气规则。这两个块稳定，所以命中率高。',
+  'rules': '禁句 + 口癖，量很小（<200 字），塞在人设后面。',
+  'L4 → L3': '人格进化固化后写进语言层（persona.md 的成长段），所以说话会变。',
+  'L5 → L3': '群聊学到的词条进语言层，影响她用什么词。',
+  '无': '这一项目前没有异常。',
+  'chat_history': 'SQLite 表，3602 行。私聊 2317 + 群聊 632+218+215。',
+  '长期记忆.json': '295 条档案 / 11 组。每条带 w(权重) h(命中次数) lu(最后使用) exp(过期) cls(分类)。',
+  'vec_index.json': '376 条向量 / 8.1MB。语义检索用的，和字面检索互补。',
+  'diary': '17 篇日记。每天一篇，写当天的事和心情。',
+  '词条': '683 条群聊说法。',
+  'arch_text': '档案摘要块。内容与查询无关，所以缓存最稳。',
+  'arch_related': '【相关记忆】块。按当前这句话去检索，所以每轮都变——这是缓存的主要破坏者。',
+  'recent': '最近 10 条对话原文。',
+  'L0 → L1': '核心给情绪提供"我是谁"的基线。',
+  'L0 → L2': '记忆总量挂在核心层。',
+  'L0 → L8': 'DSH 桥通过核心调用。',
+  'L2 → L3': '词条影响说话用词。',
+  'L2 → L4': '事件进复盘，形成成长提案。',
+  'L2 → L0': '总量挂核心。',
+  '事件': '每条对话、每次操作都算事件。',
+  '事件 → 复盘': '日复盘 / 周复盘把事件归纳成结论。',
+  '复盘 → 提案': '结论变成"要不要改人设"的提案。',
+  '提案 → 人点头': '核心、关系、边界类提案必须人确认，低风险自己进。',
+  'DSH 桥': '单点：事件来了才醒；没有会话时 dsh_send 会被拒。',
+  '插件市场': '装能力的地方，插件装完要重启 bot。',
+  'NapCat': 'QQ 协议端，127.0.0.1:8080。',
+  'siliconflow proxy': '硅基流动代理，8850。',
+  'bili_daily.json': '今日刷视频额度 0/40，还剩 40 条。',
+  'douyin.json': '抖音评论 19 条，视频 7 条。',
+  'qzone.json': 'QQ 空间说说 36 条。',
+  'balances': 'DeepSeek ¥6.93。火山通道查询失败。',
+  '记忆维护': '每 30 分钟一次：合并待处理、更新权重、清理过期。',
+  '抖音轮询': '已改成 to_thread，不再阻塞事件循环。',
+  'B站日报': '每日 02:00 生成。',
+  '自检': '每 3 小时一次，8 项检查。',
+  '心跳': '3 秒一次，最密的任务。',
+  'was missed by': 'apscheduler 警告：任务被拖慢了。通常是某轮对话太长，不一定是故障。',
+
+};
+
+})();
+/* 2026-11-08 曲线与花费 */
+</script>
+<div id="costLayer" style="display:none;position:fixed;inset:0;z-index:999;
+background:rgba(3,6,12,.86);backdrop-filter:blur(6px);padding:40px;overflow:auto">
+<div style="max-width:1100px;margin:0 auto;border:1px solid rgba(96,165,250,.35);
+background:rgba(16,26,42,.98);padding:20px 24px">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="font:600 18px/1 \"Microsoft YaHei\",sans-serif;color:#eaf4ff">花费明细</div>
+<span style="font:10px/1 Consolas,monospace;color:#7d95b5;letter-spacing:1.5px">COST // BY SCOPE</span>
+<button id="costClose" style="margin-left:auto;background:none;border:1px solid rgba(96,165,250,.4);
+color:#9fb6d1;padding:4px 12px;cursor:pointer;font-size:12px">关闭</button>
+</div>
+<div class="memgrid" style="margin:0 0 14px">
+<div><b id="k-day">—</b><span>今日花费 · 元</span></div>
+<div><b id="k-calls">—</b><span>今日调用 · 次</span></div>
+<div><b id="k-all">—</b><span>累计花费 · 元</span></div>
+<div><b id="k-tok">—</b><span>今日 token</span></div>
+</div>
+<div id="k-list"></div>
+</div></div>
+<svg width="0" height="0" style="position:absolute">
+<filter id="wireFilter">
+  <feColorMatrix type="matrix" values="
+    0 0 0 0 0.22
+    0 0 0 0 0.74
+    0 0 0 0 0.97
+    1.1 0.55 0.15 0 -0.12"/>
+</filter>
+</svg>
+</body>
+</html>

@@ -66,6 +66,52 @@ def allowed() -> tuple[bool, str]:
 
 # ---------------------------------------------------------------- 六个动作
 
+# ---------------------------------------------------------------- 授权模式（2026-11-08）
+# 起因：DeepSeek 官方 dsh-superagent 的 observe 模式 ——
+# 推断出来的东西先只记录、什么都不做；你看记录觉得对，再切 auto。
+# 这里只拦【主动开口】这一条线；被直接要求的回复不受影响。
+_MODE_FILE = ROOT / "memory" / "accept_mode.json"
+_WOULD_FILE = ROOT / "memory" / "would_say.jsonl"
+
+
+def accept_mode() -> str:
+    """off / observe / auto。默认 observe —— 只记录，不真发。"""
+    try:
+        import json as _j
+        d = _j.loads(_MODE_FILE.read_text(encoding="utf-8"))
+        m = str(d.get("mode") or "observe")
+        return m if m in ("off", "observe", "auto") else "observe"
+    except Exception:  # noqa: BLE001
+        return "observe"
+
+
+def set_accept_mode(mode: str) -> bool:
+    try:
+        if mode not in ("off", "observe", "auto"):
+            return False
+        import json as _j
+        _MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _MODE_FILE.write_text(_j.dumps({"mode": mode}, ensure_ascii=False), encoding="utf-8")
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def log_would_say(text: str, why: str = "") -> None:
+    """observe 模式下记一条「本来要说什么」。只留最近 500 条。"""
+    try:
+        import json as _j, time as _t
+        row = {"ts": _t.strftime("%Y-%m-%d %H:%M:%S"),
+               "text": str(text)[:200], "why": str(why)[:80]}
+        lines = []
+        if _WOULD_FILE.exists():
+            lines = _WOULD_FILE.read_text(encoding="utf-8").splitlines()[-499:]
+        lines.append(_j.dumps(row, ensure_ascii=False))
+        _WOULD_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _WOULD_FILE.write_text(NL.join(lines) + NL, encoding="utf-8")
+    except Exception:  # noqa: BLE001
+        pass
+
 async def act_balance() -> str:
     """查余额。返回一句人话（拿不到返回空）。"""
     try:

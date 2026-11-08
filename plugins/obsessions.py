@@ -160,6 +160,11 @@ def decay(sleeping: bool = False) -> None:
         age_h = max(0.0, now - float(it.get("last") or now)) / 3600.0
         drop = (TENSION_IGNORED + age_h * TENSION_AGE_PER_HOUR) * mult
         it["tension"] = round(float(it.get("tension") or 0) - drop, 2)
+        # 2026-11-08：**age_h 的参照必须更新**，否则每次 decay 都按"距最后一次提起"的年龄
+        # 重复扣一遍年龄部分 —— 消息密集时张力会成倍往下掉。
+        it["last"] = now
+        if it["tension"] < 0:
+            it["tension"] = 0.0
         changed = True
         if it["tension"] <= 0:
             it["status"] = "closed"

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>大肥鱼的 3D 小家</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0e16;overflow:hidden;font-family:system-ui,sans-serif}
+  #app{position:fixed;inset:0}
+  #hud{position:fixed;left:14px;top:14px;z-index:5;color:#cfe6ff;font-size:13px;
+       background:rgba(8,16,28,.75);border:1px solid rgba(90,140,190,.3);
+       border-radius:10px;padding:10px 12px;line-height:1.7;pointer-events:none}
+  #hud b{color:#ffd77a}
+  #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+        color:#9fc0d6;font-size:15px;z-index:9;background:#0a0e16;transition:opacity .4s}
+  #load.hide{opacity:0;pointer-events:none}
+  #bar{position:fixed;left:0;right:0;bottom:0;padding:9px;display:flex;flex-wrap:wrap;gap:5px;
+       background:rgba(8,16,28,.85);border-top:1px solid rgba(90,140,190,.25);z-index:8}
+  #bar button{background:#1e2a3c;color:#cfe0f5;border:1px solid #34506e;border-radius:7px;
+              padding:5px 10px;font-size:12px;cursor:pointer}
+  #bar button:hover{background:#28405c}
+  #bar button.on{background:#2b6da8;border-color:#4a9de0;color:#eaf4ff}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="hud">大肥鱼 · <b id="st">加载中</b></div>
+<div id="load">正在唤醒她…</div>
+<div id="bar"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "/memory-viz/vendor/three/three.module.js",
+  "three/addons/": "/memory-viz/vendor/jsm/",
+  "@pixiv/three-vrm": "/memory-viz/vendor/three-vrm.module.min.js",
+  "@pixiv/three-vrm-animation": "/memory-viz/vendor/three-vrm-animation.module.min.js"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
+
+const app = document.getElementById('app');
+const loadEl = document.getElementById('load');
+const stEl = document.getElementById('st');
+const barEl = document.getElementById('bar');
+
+// ═══ 渲染器 ═══
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1218);
+const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.05, 200);
+
+// ═══ 光（白天）═══
+scene.add(new THREE.AmbientLight(0xfff4e6, 1.0));
+scene.add(new THREE.HemisphereLight(0xdfefff, 0xb0a08a, 0.9));
+const sun = new THREE.DirectionalLight(0xfff0d0, 2.0);
+sun.position.set(-3, 5, 2.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-4; sun.shadow.camera.right=4;
+sun.shadow.camera.top=5;   sun.shadow.camera.bottom=-1;
+sun.shadow.bias = -0.0015;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x9fc4ff, 0.7);
+fill.position.set(3, 2, -3);
+scene.add(fill);
+
+// ═══ 房间（代码生成）═══
+const W=5.4, D=5.0, H=2.7;
+const mat = (c, r=0.88, m=0.04) => new THREE.MeshStandardMaterial({color:c, roughness:r, metalness:m});
+
+// 地板
+for (let i=0;i<14;i++){
+  const w = W/14;
+  const p = new THREE.Mesh(new THREE.BoxGeometry(w*0.97, 0.04, D), mat(i%2?0xb08a63:0x94714f, 0.92, 0.02));
+  p.position.set(-W/2 + w*(i+0.5), -0.02, 0);
+  p.receiveShadow = true;
+  scene.add(p);
+}
+// 墙
+const wallMat = mat(0xd8dfe8, 0.96, 0);
+const back = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.08), wallMat);
+back.position.set(0, H/2, -D/2); back.receiveShadow = true; scene.add(back);
+[-1,1].forEach(s=>{
+  const side = new THREE.Mesh(new THREE.BoxGeometry(0.08, H, D), wallMat);
+  side.position.set(s*W/2, H/2, 0); side.receiveShadow = true; scene.add(side);
+});
+// 踢脚
+const skirt = mat(0x9aa6b8, 0.9, 0.02);
+const sk1 = new THREE.Mesh(new THREE.BoxGeometry(W, 0.15, 0.1), skirt);
+sk1.position.set(0, 0.075, -D/2+0.06); scene.add(sk1);
+[-1,1].forEach(s=>{
+  const sk = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, D), skirt);
+  sk.position.set(s*(W/2-0.06), 0.075, 0); scene.add(sk);
+});
+
+// 窗户（后墙）
+const winW=1.5, winH=1.2, winY=1.8, winX=-1.2;
+const frame = mat(0xb8c4d4, 0.75, 0.06);
+[[0,winH/2,winW+0.12,0.07],[0,-winH/2,winW+0.12,0.07]].forEach(([x,y,w,h])=>{
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w,h,0.1), frame);
+  b.position.set(winX+x, winY+y, -D/2+0.06); scene.add(b);
+});
+[[-winW/2,0,0.07,winH],[winW/2,0,0.07,winH]].forEach(([x,y,w,h])=>{
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w,h,0.1), frame);
+  b.position.set(winX+x, winY+y, -D/2+0.06); scene.add(b);
+});
+// 窗外天空 + 地面
+const sky = new THREE.Mesh(new THREE.PlaneGeometry(winW, winH*0.72), new THREE.MeshBasicMaterial({color:0xa8d4f0}));
+sky.position.set(winX, winY+winH*0.14, -D/2-0.02); scene.add(sky);
+const grd = new THREE.Mesh(new THREE.PlaneGeometry(winW, winH*0.30), new THREE.MeshBasicMaterial({color:0x9cbb96}));
+grd.position.set(winX, winY-winH*0.34, -D/2-0.021); scene.add(grd);
+// 云
+for (let i=0;i<3;i++){
+  const g = new THREE.Group();
+  for (let k=0;k<3;k++){
+    const puff = new THREE.Mesh(new THREE.CircleGeometry(0.05+k*0.012, 14),
+      new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.9}));
+    puff.position.set((k-1)*0.055, Math.abs(k-1)*-0.012, 0);
+    g.add(puff);
+  }
+  g.position.set(winX-0.4+i*0.4, winY+0.16+(i%2)*0.14, -D/2-0.013);
+  scene.add(g);
+}
+
+// 床
+const bedG = new THREE.Group();
+const bw=1.5, bd=2.1, bh=0.42;
+const frameBed = new THREE.Mesh(new THREE.BoxGeometry(bw, bh*0.55, bd), mat(0x6d7f9e, 0.82, 0.08));
+frameBed.position.y = bh*0.275; frameBed.castShadow = frameBed.receiveShadow = true; bedG.add(frameBed);
+const mattress = new THREE.Mesh(new THREE.BoxGeometry(bw*0.96, bh*0.5, bd*0.97), mat(0xe8eef6, 0.96, 0));
+mattress.position.y = bh*0.8; mattress.castShadow = mattress.receiveShadow = true; bedG.add(mattress);
+const sheet = new THREE.Mesh(new THREE.BoxGeometry(bw*0.98, 0.05, bd*0.6), mat(0xf7fafd, 0.94, 0));
+sheet.position.set(0, bh*0.8+bh*0.25+0.02, bd*0.17); bedG.add(sheet);
+const blanket = new THREE.Mesh(new THREE.BoxGeometry(bw*1.02, 0.12, bd*0.55), mat(0x7f9dc9, 0.95, 0));
+blanket.position.set(0, bh*0.8+bh*0.25+0.08, -bd*0.18); blanket.castShadow = true; bedG.add(blanket);
+const pillow = new THREE.Mesh(new THREE.BoxGeometry(bw*0.6, 0.12, 0.32), mat(0xffffff, 0.98, 0));
+pillow.position.set(0, bh*0.8+bh*0.25+0.09, -bd*0.4); pillow.rotation.x = -0.1; bedG.add(pillow);
+const hb = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.72, 0.09), mat(0x6d7f9e, 0.78, 0.1));
+hb.position.set(0, 0.36, -bd/2-0.04); hb.castShadow = true; bedG.add(hb);
+bedG.position.set(W/2-bw/2-0.18, 0, -D/2+bd/2+0.25);
+scene.add(bedG);
+
+// 书桌
+const deskG = new THREE.Group();
+const dw=1.9, dd=0.72, dh=0.74;
+const top = new THREE.Mesh(new THREE.BoxGeometry(dw, 0.06, dd), mat(0xa8825c, 0.72, 0.06));
+top.position.y = dh; top.castShadow = top.receiveShadow = true; deskG.add(top);
+[[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([sx,sz])=>{
+  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, dh, 0.07), mat(0x6e5238, 0.88, 0.04));
+  leg.position.set(sx*(dw/2-0.08), dh/2, sz*(dd/2-0.08)); leg.castShadow = true; deskG.add(leg);
+});
+// 显示器
+const monBase = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.03,0.18), mat(0x2a3040,0.6,0.25));
+monBase.position.set(0, dh+0.045, -0.12); deskG.add(monBase);
+const monStand = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.24,0.05), mat(0x2a3040,0.6,0.25));
+monStand.position.set(0, dh+0.16, -0.12); deskG.add(monStand);
+const scrBody = new THREE.Mesh(new THREE.BoxGeometry(0.92,0.54,0.04), mat(0x1a2030,0.5,0.3));
+scrBody.position.set(0, dh+0.54, -0.13); scrBody.castShadow = true; deskG.add(scrBody);
+const scrFace = new THREE.Mesh(new THREE.PlaneGeometry(0.86,0.48), new THREE.MeshBasicMaterial({color:0x3a86c8}));
+scrFace.position.set(0, dh+0.54, -0.105); deskG.add(scrFace);
+const glow = new THREE.PointLight(0x4a8fd8, 1.8, 3.0, 2);
+glow.position.set(0, dh+0.54, -0.02); deskG.add(glow);
+// 键盘
+const kb = new THREE.Mesh(new THREE.BoxGeometry(0.42,0.02,0.14), mat(0x2e3444,0.72,0.12));
+kb.position.set(0, dh+0.04, 0.16); deskG.add(kb);
+// 台灯
+const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.11,0.03,16), mat(0x3a4254,0.6,0.25));
+lampBase.position.set(dw/2-0.22, dh+0.045, -0.02); deskG.add(lampBase);
+const lampArm = new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.34,8), mat(0x3a4254,0.6,0.25));
+lampArm.position.set(dw/2-0.22, dh+0.22, -0.02); deskG.add(lampArm);
+const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.13,0.16,16,1,true), mat(0x3a4254,0.6,0.25));
+lampShade.position.set(dw/2-0.22, dh+0.42, -0.02); lampShade.rotation.x = Math.PI; deskG.add(lampShade);
+const lampLight = new THREE.PointLight(0xffd8a8, 1.5, 2.6, 2);
+lampLight.position.set(dw/2-0.22, dh+0.36, -0.02); deskG.add(lampLight);
+// 书
+for (let i=0;i<3;i++){
+  const bk = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.035,0.16),
+    mat([0xa85a5a,0x5a7aa8,0xa89a5a][i], 0.92, 0));
+  bk.position.set(-dw/2+0.3, dh+0.05+i*0.035, 0.05);
+  bk.rotation.y = (i-1)*0.12; deskG.add(bk);
+}
+deskG.position.set(-W/2+dw/2+0.2, 0, -D/2+0.78);
+scene.add(deskG);
+
+// 椅子
+const chairG = new THREE.Group();
+const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.06,0.44), mat(0x6d7a94, 0.86, 0.04));
+seat.position.y = 0.45; seat.castShadow = true; chairG.add(seat);
+const backR = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.42,0.05), mat(0x6d7a94, 0.86, 0.04));
+backR.position.set(0,0.68,-0.19); backR.castShadow = true; chairG.add(backR);
+[[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([sx,sz])=>{
+  const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04,0.45,0.04), mat(0x3e4658, 0.82, 0.08));
+  leg.position.set(sx*0.19, 0.225, sz*0.18); chairG.add(leg);
+});
+chairG.position.set(-W/2+dw/2+0.2, 0, -D/2+1.58);
+scene.add(chairG);
+
+// 地毯
+const rug = new THREE.Mesh(new THREE.CircleGeometry(0.95, 48), mat(0x8a76a8, 0.98, 0));
+rug.rotation.x = -Math.PI/2; rug.position.set(0, 0.005, 0.6); rug.receiveShadow = true; scene.add(rug);
+const rugRing = new THREE.Mesh(new THREE.RingGeometry(0.8,0.95,48), mat(0x9c8aba, 0.98, 0));
+rugRing.rotation.x = -Math.PI/2; rugRing.position.set(0, 0.007, 0.6); scene.add(rugRing);
+
+// 吸顶灯
+const ceil = new THREE.PointLight(0xfff6e8, 1.8, 7, 2);
+ceil.position.set(0, H-0.2, 0); scene.add(ceil);
+
+// ═══ 加载 VRM ═══
+let vrm = null, mixer = null;
+const ACTIONS = {};
+let curName = '';
+let blinkT = 0, nextBlink = 2 + Math.random()*3, blinking = 0;
+
+const gl = new GLTFLoader();
+gl.register(p => new VRMLoaderPlugin(p));
+gl.register(p => new VRMAnimationLoaderPlugin(p));
+
+gl.load('models/fish.vrm', (gltf) => {
+  vrm = gltf.userData.vrm;
+  try { VRMUtils.removeUnnecessaryVertices(gltf.scene); } catch(e) {}
+  if (vrm.meta?.metaVersion === '0') vrm.scene.rotation.y = Math.PI;
+  vrm.scene.traverse(o => { o.frustumCulled = false; if (o.isMesh) o.castShadow = true; });
+  scene.add(vrm.scene);
+
+  // 摆位：地毯中央，脚踩地
+  vrm.scene.updateMatrixWorld(true);
+  const b0 = new THREE.Box3().setFromObject(vrm.scene);
+  const s0 = b0.getSize(new THREE.Vector3());
+  const c0 = b0.getCenter(new THREE.Vector3());
+  vrm.scene.position.x -= c0.x;
+  vrm.scene.position.z += 0.6 - c0.z;
+  vrm.scene.position.y -= b0.min.y;
+  const Ht = s0.y || 1.0;
+  window.__H = Ht;
+
+  camera.position.set(1.35, Ht*1.25, 2.9);
+  camera.lookAt(0, Ht*0.5, 0.4);
+  const ctl = new OrbitControls(camera, renderer.domElement);
+  ctl.target.set(0, Ht*0.5, 0.4);
+  ctl.enableDamping = true; ctl.dampingFactor = 0.08;
+  ctl.minDistance = 0.9; ctl.maxDistance = 6;
+  ctl.maxPolarAngle = Math.PI*0.53; ctl.enablePan = false; ctl.update();
+  window.__ctl = ctl;
+
+  mixer = new THREE.AnimationMixer(vrm.scene);
+  window.__mixer = mixer;
+  window.__vrm = vrm;
+
+  loadEl.classList.add('hide');
+  stEl.textContent = `骨骼就绪 · 身高 ${Ht.toFixed(2)}`;
+  window.__ready = true;
+
+  // 加载 VRMA
+  const LIST = ['Relax','Walk','Jog','SitIdle','FancyDressParty','Sleepy','Thinking',
+                'LookAround','Clapping','Jump','Goodbye','Blush','Angry','Sad','Surprised',
+                'Sleep','Sit','SitIdleMx','Stretch','Yawn','AngryMx','JumpMx'];
+  let ok = 0;
+  LIST.forEach(nm => {
+    gl.load(`models/vrma/${nm}.vrma`, (g) => {
+      try {
+        const va = g.userData.vrmAnimations?.[0];
+        if (!va) return;
+        const clip = createVRMAnimationClip(va, vrm);
+        const act = mixer.clipAction(clip);
+        act.setLoop(THREE.LoopOnce, 1);
+        act.clampWhenFinished = true;
+        ACTIONS[nm] = act;
+        ok++;
+        stEl.textContent = `动作 ${ok}/${LIST.length}`;
+        if (ok === 1) { play('Relax', false); buildBar(); }
+      } catch(e) { console.warn(nm, e); }
+    }, undefined, () => {});
+  });
+  setTimeout(() => { if (Object.keys(ACTIONS).length) buildBar(); }, 6000);
+}, (x)=>{ if(x.total) loadEl.textContent = `正在唤醒她… ${Math.round(x.loaded/x.total*100)}%`; },
+   (e)=>{ loadEl.textContent = '加载失败：'+(e?.message||e); console.error(e); });
+
+// ═══ 播放 ═══
+function play(nm, once=true) {
+  const a = ACTIONS[nm];
+  if (!a) return false;
+  Object.entries(ACTIONS).forEach(([k,x]) => { if (k !== nm) x.fadeOut(0.25); });
+  a.reset().fadeIn(0.25);
+  a.setLoop(once?THREE.LoopOnce:THREE.LoopRepeat, once?1:Infinity);
+  a.clampWhenFinished = once;
+  a.play();
+  curName = nm;
+  [...barEl.children].forEach(b => b.classList.toggle('on', b.dataset.n === nm));
+  return true;
+}
+window.__play = play;
+
+function buildBar() {
+  const LIST = Object.keys(ACTIONS);
+  if (!LIST.length) return;
+  barEl.innerHTML = '';
+  const add = (label, name) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.dataset.n = name || '';
+    b.onclick = () => {
+      if (!name) { Object.values(ACTIONS).forEach(x=>x.stop()); curName=''; return; }
+      play(name, true);
+    };
+    barEl.appendChild(b);
+  };
+  add('⟳ 待机', 'Relax');
+  LIST.filter(n=>n!=='Relax').forEach(n => add(n, n));
+}
+
+// ═══ 循环 ═══
+const clock = new THREE.Clock();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  if (vrm) {
+    const em = vrm.expressionManager;
+    // 眨眼
+    blinkT += dt;
+    if (blinking > 0) {
+      blinking -= dt*6;
+      em.setValue('blink', Math.max(0, Math.min(1, blinking)));
+      if (blinking <= 0) em.setValue('blink', 0);
+    } else if (blinkT > nextBlink) {
+      blinking = 1; blinkT = 0; nextBlink = 2 + Math.random()*3.5;
+    }
+    if (mixer) mixer.update(dt);
+    vrm.update(dt);
+  }
+  renderer.render(scene, camera);
+}
+loop();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

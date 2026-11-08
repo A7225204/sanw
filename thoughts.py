@@ -442,8 +442,11 @@ def list_open() -> list[dict]:
     # 冷却：刚问过的先别冒头（否则同一件事会连着问好几遍）
     fresh = [it for it in items
              if now - float(it.get("asked_at") or 0) >= ASK_COOLDOWN_H * 3600]
-    if fresh:
-        items = fresh
+    # 2026-11-08：**冷却中的就是不出**，不再 fallback 到「全部」。
+    # 原来 fresh 为空时 items 保持全部 → 唯一那条刚问过的照样被 top() 选中、
+    # prompt_line 又 poke 一次 → gain +0.08 → 分更高 → 下次还选它。
+    # 越问越优先，正是「反复抓同一件事」的闭环。宁可这一轮没心事。
+    items = fresh
     return sorted(items, key=_priority_of, reverse=True)
 
 
@@ -580,15 +583,13 @@ def prompt_line() -> str:
     it = top()
     if not it:
         return ""
-    # 2026-11-07：**注入一次就 poke 一次**。
-    # 原来 prompt_line 只读不记，一条「承诺」能从早挂到晚、每次生成都拿出来问一遍，
-    # 主人感受就是「她反复抓同一件事」。poke 会让分量 +0.08，
-    # 而 _priority_of 里「提过」是加权的 —— 真正该急的越提越急，
-    # 而已经问过两三次还没结果的会自然被 due 和后续新念头挤下去。
-    try:
-        poke(int(it.get("id") or 0))
-    except Exception:  # noqa: BLE001
-        pass
+    # 2026-11-08：**去掉了「注入即 poke」**。
+    # 原来这句让每次生成都 poke 一次，于是：
+    #   · _priority_of 的 gain 封顶 +0.32（比 base 0.4 的 80% 还多）→ 越问越优先
+    #   · _alive 的续命 +4h × poked → 任何被注入过的念头几乎不会自然死
+    # 实测一条杂念 5.7 小时被 poke 83 次、分数 0.681，永远排第一 ——
+    # 正是「答应了还问、拒绝了也问」那件事的燃料。
+    # 现在 poked 只记「她真的主动提过几次」（agency.act_schedule_self 那条路）。
     _txt = str(it.get("text"))[:40]
     _why = str(it.get("why") or "")
     _p = _priority_of(it)

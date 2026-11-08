@@ -7,15 +7,15 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a2145'/%3E%3Cpath d='M15 32c0-6.6 8.2-11 17-11s17 4.4 17 11-8.2 11-17 11-17-4.4-17-11z' fill='%236fb6ff'/%3E%3Cpath d='M15 32l-8-7v14z' fill='%234a92e0'/%3E%3Ccircle cx='41' cy='29' r='2.6' fill='%2322314a'/%3E%3C/svg%3E">
 <style>
   :root{
-    --bg:#0e142e; --bg2:#131a3a; --card:#1a2145; --card2:#212a56;
-    --line:#2c3666; --txt:#e7ebf8; --sub:#9aa5cf; --dim:#6d77a6;
-    --blue:#6aa8ff; --violet:#a78bfa; --pink:#f472b6; --green:#34d399;
+    --bg:#04070d; --bg2:#080f1a; --card:#0a1421; --card2:#0f1d2e;
+    --line:#1a2a40; --txt:#e8f0fb; --sub:#8ea4c4; --dim:#64789a;
+    --blue:#3b82f6; --violet:#60a5fa; --pink:#f472b6; --green:#34d399;
     --amber:#fbbf24; --red:#fb7185;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
     font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
-    background:radial-gradient(1200px 700px at 80% -10%,#1c2554 0%,#0e142e 55%);
+    background:radial-gradient(1200px 700px at 80% -10%,#0e1e33 0%,#04070d 58%);
     color:var(--txt); min-height:100vh; padding:16px 24px 40px;
   }
   .wrap{max-width:1280px;margin:0 auto;position:relative;z-index:1}
@@ -26,7 +26,7 @@
   /* 顶栏 */
   header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
   .title h1{font-size:24px;letter-spacing:1px}
-  .title h1 .fish{filter:drop-shadow(0 0 8px rgba(106,168,255,.6))}
+  .title h1 .fish{filter:drop-shadow(0 0 8px rgba(59,130,246,.6))}
   .title .meta{margin-top:6px;color:var(--sub);font-size:12px}
   .title .meta b{color:var(--blue);font-weight:600}
   .brain{display:flex;align-items:center;gap:12px}
@@ -34,7 +34,7 @@
   .brain .brain-info .lab{font-size:12px;color:var(--dim)}
   .brain .brain-info .ver{font-size:12px;color:var(--sub)}
   .brain img{width:72px;height:72px;border-radius:50%;object-fit:cover;
-    box-shadow:0 0 18px rgba(167,139,250,.5),inset 0 0 0 2px var(--line)}
+    box-shadow:0 0 18px rgba(125,211,252,.5),inset 0 0 0 2px var(--line)}
   .conn{font-size:12px;margin-left:10px;padding:2px 8px;border-radius:16px}
   .conn.ok{background:rgba(52,211,153,.15);color:var(--green)}
   .conn.bad{background:rgba(251,113,133,.15);color:var(--red)}
@@ -45,13 +45,13 @@
     display:grid;grid-template-columns:250px 1fr 360px;gap:24px;align-items:center}
   .fish-face{text-align:center}
   .fish-face .avatar{width:150px;height:150px;border-radius:50%;object-fit:cover;
-    border:2px solid var(--line);background:#151c3d;display:inline-block;
-    box-shadow:0 6px 18px rgba(106,168,255,.4),inset 0 0 0 2px rgba(255,255,255,.06)}
-  .fish-face .avatar-fallback{font-size:48px;filter:drop-shadow(0 6px 16px rgba(106,168,255,.4))}
+    border:2px solid var(--line);background:#0a1421;display:inline-block;
+    box-shadow:0 6px 18px rgba(59,130,246,.4),inset 0 0 0 2px rgba(255,255,255,.06)}
+  .fish-face .avatar-fallback{font-size:48px;filter:drop-shadow(0 6px 16px rgba(59,130,246,.4))}
   .fish-face .nick{margin-top:8px;font-size:18px;font-weight:700;color:var(--blue)}
   .fish-face .tagline{margin-top:6px;font-size:12px;color:var(--sub)}
   .fish-face .mood-chip{display:inline-block;margin-top:10px;padding:4px 12px;border-radius:16px;
-    background:rgba(167,139,250,.16);color:var(--violet);font-size:12px;border:1px solid var(--line)}
+    background:rgba(125,211,252,.16);color:var(--violet);font-size:12px;border:1px solid var(--line)}
   .bars{display:grid;grid-template-columns:1fr;gap:16px}
   /* 2026-11-07 需求两栏 */
   .bar.thin .track{height:6px}
@@ -68,7 +68,7 @@
     font-weight:700;letter-spacing:.2px;margin-bottom:10px;padding-bottom:8px;
     border-bottom:1px solid rgba(255,255,255,.10)}
   .need-h .nh-ico{font-size:14px}
-  .need-h .nh-sub{margin-left:auto;font-size:11px;font-weight:400;color:#8fa8c8}
+  .need-h .nh-sub{margin-left:auto;font-size:12px;font-weight:400;color:#8fa8c8}
   .need-item{margin-bottom:11px}
   .need-item:last-child{margin-bottom:0}
   .ni-top{display:flex;justify-content:space-between;align-items:baseline;
@@ -81,7 +81,7 @@
   .ni-bar>i{display:block;height:100%;border-radius:4px;transition:width .6s ease,background .4s}
   .body .ni-bar>i{background:linear-gradient(90deg,#f0a15c,#ffd08a)}
   .mind .ni-bar>i{background:linear-gradient(90deg,#6f9dff,#a99cff)}
-  .ni-cap{font-size:11.5px;color:#93a9c4;margin-top:3px;font-weight:500;letter-spacing:.2px}
+  .ni-cap{font-size:12px;color:#93a9c4;margin-top:3px;font-weight:500;letter-spacing:.2px}
   /* 情欲：越高越想要（和别的「越高越好」语义不同，颜色分开） */
   .need-item.arousal .ni-bar>i{background:linear-gradient(90deg,#c76bd6,#ff9ecf)}
   .need-item.arousal .ni-cap{color:#d9a0e8}
@@ -99,7 +99,7 @@
   .emo-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
   .bar .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
   .bar .row .name{color:var(--sub)} .bar .row .val{font-weight:700}
-  .track{height:12px;border-radius:8px;background:#121836;overflow:hidden}
+  .track{height:12px;border-radius:8px;background:#0a1421;overflow:hidden}
   .track>i{display:block;height:100%;border-radius:8px;transition:width .6s ease}
   .bar.mood .track>i{background:var(--violet)}
   .bar.hunger .track>i{background:var(--amber)}
@@ -107,7 +107,7 @@
   .bar.aff .track>i{background:var(--pink)}
   .bar.sleep .track>i{background:#6d77a6}
   .sleep-note{font-size:12px;color:var(--sub);margin-top:6px}
-  .activity-line{margin-top:6px;padding:8px 8px;border-radius:8px;background:#151c3d;border:1px solid var(--line);
+  .activity-line{margin-top:6px;padding:8px 8px;border-radius:8px;background:#0a1421;border:1px solid var(--line);
     font-size:12px;color:#c9d5f2;display:flex;align-items:center;gap:8px}
   .act-dot{width:8px;height:8px;border-radius:50%;background:#6d77a6;flex:none}
   .act-dot.on{background:var(--green);box-shadow:0 0 0 0 rgba(80,220,140,.6);animation:pulse 1.6s infinite}
@@ -122,16 +122,16 @@
   .token-card{margin-bottom:18px}
   .token-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
   @media(max-width:1080px){.token-grid{grid-template-columns:1fr}}
-  .token-block{background:#151c3d;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+  .token-block{background:#0a1421;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
   .token-title{font-size:12px;color:var(--sub);margin-bottom:8px}
   .token-big{font-size:24px;font-weight:800;color:var(--blue)}
   .token-big small{font-size:12px;color:var(--dim);font-weight:400;margin-left:6px}
   .token-block .mini{margin:8px 0 4px}
   .token-cost{font-size:12px;color:var(--amber)}
   .token-scope{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
-  .token-scope .sc{font-size:12px;padding:4px 8px;border-radius:12px;background:#151c3d;border:1px solid var(--line);color:var(--sub)}
+  .token-scope .sc{font-size:12px;padding:4px 8px;border-radius:12px;background:#0a1421;border:1px solid var(--line);color:var(--sub)}
   .token-scope .sc b{color:var(--txt)}
-  .token-note{margin-top:10px;font-size:11.12px;color:var(--dim)}
+  .token-note{margin-top:10px;font-size:12px;color:var(--dim)}
 
   /* 三列 */
   .grid{display:flex;gap:16px;align-items:flex-start}
@@ -157,7 +157,7 @@
   section.card h2 .cnt{margin-left:auto;font-size:12px;color:var(--dim);font-weight:400}
 
   /* 服务行 */
-  .svc{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:12px;background:#151c3d;margin-bottom:8px}
+  .svc{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:12px;background:#0a1421;margin-bottom:8px}
   .svc .dot{width:10px;height:10px;border-radius:50%;flex:none}
   .svc.on .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
   .svc.off .dot{background:#46507e}
@@ -186,11 +186,11 @@
   #cardGroup .card-scroll{display:flex;flex-direction:column}
   #cardGroup .card-scroll > .blk:last-child{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-bottom:0}
   #cardGroup .lex-top{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto}
-  .lex-top li{list-style:none;font-size:12.12px;padding:4px 8px;border-radius:8px;background:#151c3d;margin-bottom:6px}
+  .lex-top li{list-style:none;font-size:12.12px;padding:4px 8px;border-radius:8px;background:#0a1421;margin-bottom:6px}
   .lex-top li .term{color:var(--blue);font-weight:600}
   .lex-top li .cnt{float:right;color:var(--amber);font-size:12px}
-  .lex-top li .mean{color:var(--sub);font-size:11.12px;margin-top:2px}
-  .bili-latest{font-size:12.12px;line-height:1.7;color:var(--sub);background:#151c3d;border-radius:12px;padding:8px 12px;margin-top:8px;overflow-wrap:anywhere;word-break:break-word}
+  .lex-top li .mean{color:var(--sub);font-size:12px;margin-top:2px}
+  .bili-latest{font-size:12.12px;line-height:1.7;color:var(--sub);background:#0a1421;border-radius:12px;padding:8px 12px;margin-top:8px;overflow-wrap:anywhere;word-break:break-word}
   .bili-latest a{color:var(--blue);text-decoration:none}
   .bili-latest a:hover{text-decoration:underline}
   .bili-latest .who{color:var(--pink)}
@@ -200,11 +200,11 @@
   .bili-more:hover{color:#d6e6ff;border-color:#3f5a92}
   .bili-sum{font-size:12px;color:#8fa3c8;line-height:1.6;margin:3px 0 0 34px}
   .bili-cm{font-size:12px;color:#7fd4ff;line-height:1.6;margin:1px 0 0 34px;opacity:.85}
-  .diary-excerpt{font-size:12px;color:var(--sub);line-height:1.7;margin-top:6px;background:#151c3d;border-radius:8px;padding:8px 8px}
+  .diary-excerpt{font-size:12px;color:var(--sub);line-height:1.7;margin-top:6px;background:#0a1421;border-radius:8px;padding:8px 8px}
   footer{margin-top:18px;text-align:center;color:var(--dim);font-size:12px;line-height:1.8}
   .err-banner{background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.3);
     color:var(--red);border-radius:12px;padding:8px 12px;margin-bottom:16px;font-size:12px;display:none}
-  .cal-open{width:100%;margin-top:8px;padding:8px 8px;border-radius:8px;border:1px solid #26325c;background:#151c3d;color:#e7ebf8;cursor:pointer;font-size:12px}
+  .cal-open{width:100%;margin-top:8px;padding:8px 8px;border-radius:8px;border:1px solid #26325c;background:#0a1421;color:#e7ebf8;cursor:pointer;font-size:12px}
   .cal-open:hover{background:#22305a}
   .modal{position:fixed;inset:0;background:rgba(5,8,20,.72);display:none;align-items:center;justify-content:center;z-index:99}
   .modal.show{display:flex}
@@ -212,11 +212,11 @@
   .modal-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
   .modal-head span{cursor:pointer;color:#8fa0c8}
   .cal-nav{display:flex;justify-content:space-between;align-items:center;margin:12px 0}
-  .cal-nav button{padding:4px 12px;border-radius:8px;border:1px solid #26325c;background:#151c3d;color:#e7ebf8;cursor:pointer}
+  .cal-nav button{padding:4px 12px;border-radius:8px;border:1px solid #26325c;background:#0a1421;color:#e7ebf8;cursor:pointer}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
   .cal-dow{font-size:12px;color:#7f8db4}
   .cal-cell{padding:8px 0;border-radius:8px;font-size:12px;color:#c9d5f2;cursor:pointer;border:1px solid transparent}
-  .cal-cell:hover{background:#151c3d}
+  .cal-cell:hover{background:#0a1421}
   .cal-cell.has{background:#1e2b55;border-color:#3c5aa6;color:#fff;font-weight:700;box-shadow:0 0 0 2px rgba(90,130,255,.25)}
   .cal-cell.sel{outline:2px solid #5B8DEF}
   .cal-detail{margin-top:14px;font-size:12px;line-height:1.75;color:#c9d5f2;border-top:1px dashed #26325c;padding-top:10px}
@@ -241,7 +241,7 @@
      方向：深潜观测舱。数据是仪表，日记是纸，清单是登记簿——三种材质，不再全是一个圆角卡。
      克制：只留粒子特效这一个记忆点，其它动效删掉。 */
   :root{
-    --fs-xs:11.5px; --fs-s:12.5px; --fs-m:13.5px; --fs-l:16px; --fs-xl:24px;
+    --fs-xs:12px; --fs-s:12.5px; --fs-m:13.5px; --fs-l:16px; --fs-xl:24px;
     --r-card:14px; --r-inner:8px;
     --paper:#EFEAE0; --paper-ink:#2b2823;
   }
@@ -255,7 +255,7 @@
 
   /* 清单类：细线分隔，不要"每行一个圆角块" */
   #cardMem .recent li,#cardGroup .recent li,.lex-top li{
-    background:none;border-radius:0;border-bottom:1px solid rgba(44,54,102,.55);
+    background:none;border-radius:0;border-bottom:1px solid rgba(26,42,64,.55);
     padding:4px 0;margin-bottom:0;
   }
   #cardMem .recent li:last-child,#cardGroup .recent li:last-child,.lex-top li:last-child{border-bottom:none}
@@ -334,7 +334,7 @@
     .modal{inset:8px;max-height:calc(100vh - 16px)}
     .cal-grid{gap:4px}
   }
-  .build-tag{font-size:10.12px;color:var(--dim);border:1px solid rgba(44,54,102,.9);border-radius:16px;padding:0px 4px;margin-left:6px;letter-spacing:0}
+  .build-tag{font-size:11px;color:var(--dim);border:1px solid rgba(26,42,64,.9);border-radius:16px;padding:0px 4px;margin-left:6px;letter-spacing:0}
 
   /* ===== v3：按 ai-design-skills 的视觉系统收敛 ===== */
   *{transition-timing-function:cubic-bezier(0.32,0.72,0,1);transition-duration:700ms}
@@ -360,9 +360,9 @@
   .blk .blk-h,.mini,.recent{color:#9aa5cf}
 
   /* 学习卡：来源域名 + 过期标记（审计 A：自学要可溯源） */
-  #cardLearn .recent li .src{display:inline-block;margin-left:6px;font-size:11px;color:#7d88b8;
-    border:1px solid rgba(106,168,255,.28);border-radius:8px;padding:0 5px}
-  #cardLearn .recent li .dead{display:inline-block;margin-left:6px;font-size:11px;color:#d85c6a}
+  #cardLearn .recent li .src{display:inline-block;margin-left:6px;font-size:12px;color:#7d88b8;
+    border:1px solid rgba(59,130,246,.28);border-radius:8px;padding:0 5px}
+  #cardLearn .recent li .dead{display:inline-block;margin-left:6px;font-size:12px;color:#d85c6a}
   #cardLearn .recent li.is-dead{opacity:.5}
 
   /* 学习卡：列表吃掉剩余高度，超出在卡内滚动（避免大片留白） */
@@ -379,7 +379,7 @@
   .vis-line .vsep{color:rgba(140,150,190,.5)}
 
   /* 饥饿档位文字：重度饿红 / 饿橙 / 不饱不饿灰 / 饱绿 */
-  #hungerVal .lv{margin-left:6px;font-size:11px;padding:1px 6px;border-radius:8px;border:1px solid currentColor}
+  #hungerVal .lv{margin-left:6px;font-size:12px;padding:1px 6px;border-radius:8px;border:1px solid currentColor}
 
   /* ===== 记忆星系 ===== */
   .mem-btn{margin-left:auto;margin-right:14px;padding:8px 16px;border-radius:10px;cursor:pointer;
@@ -394,8 +394,8 @@
     border:1px solid rgba(70,110,170,.3)}
   .emo-now-main{display:flex;align-items:baseline;gap:8px}
   .emo-now-main b{font-size:22px;color:#ffd166;letter-spacing:1px}
-  .emo-now-label{font-size:11px;color:var(--dim);letter-spacing:2px}
-  .emo-hormones{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#7fb8d8;
+  .emo-now-label{font-size:12px;color:var(--dim);letter-spacing:2px}
+  .emo-hormones{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#7fb8d8;
     letter-spacing:0;min-width:0}
   .emo-now-main{display:flex;align-items:baseline;gap:8px}
   .emo-hormones .emo-h-row{display:flex;justify-content:space-between;gap:6px;min-width:0;
@@ -405,7 +405,7 @@
   .emo-hormones .down{color:#ff9c9c;font-size:10px}
   #emoChart{width:100%;height:200px;display:block;border-radius:10px;
     background:rgba(12,18,36,.55);border:1px solid rgba(60,90,140,.25)}
-  .emo-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--dim)}
+  .emo-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--dim)}
   .emo-legend i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px}
   /* ===== 房间 ===== */
   .room-card{margin-bottom:18px}
@@ -493,6 +493,461 @@
   .room-quote{font-size:12px;line-height:1.65;color:var(--dim);
     border-left:2px solid rgba(110,150,230,.5);padding-left:10px}
   @media(max-width:900px){.room-wrap{grid-template-columns:1fr}}
+
+  /* 2026-11-08 卡片跟手倾斜（抄 Aceternity 的 3D Card，纯 CSS+JS，不引框架） */
+  .card{transition:transform .16s ease, box-shadow .16s ease;will-change:transform}
+  .card.tilting{box-shadow:0 12px 32px rgba(0,0,0,.34), 0 0 0 1px rgba(120,150,255,.10)}
+  @media (prefers-reduced-motion: reduce){.card{transition:none!important;transform:none!important}}
+
+  /* ---- 玻璃层（2026-11-08）：收敛圆角 + 半透卡 + 顶部高光 + 克制的分层阴影 ---- */
+  .hero, section.card{
+    background:rgba(19,26,56,.62) !important;
+    backdrop-filter:blur(18px) saturate(1.18);
+    -webkit-backdrop-filter:blur(18px) saturate(1.18);
+    border:1px solid rgba(132,158,225,.14) !important;
+    border-radius:12px !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),      /* 顶部一道细高光，玻璃感来源 */
+      0 14px 34px -14px rgba(0,0,0,.6),         /* 落影：往下的，不发光 */
+      0 2px 6px -2px rgba(0,0,0,.35);
+  }
+  .hero{padding:18px 26px !important}
+  section.card{padding:16px 22px !important}
+
+  /* 卡内标题：收一点字距，加一条极细下划线当分隔（代替粗边框） */
+  section.card h2{
+    font-size:15px !important;letter-spacing:.2px;
+    padding-bottom:10px;margin-bottom:12px !important;
+    border-bottom:1px solid rgba(132,158,225,.10);
+  }
+
+  /* 主数字再抬一档，让它成为视觉焦点 */
+  .ni-top b{font-size:16px !important}
+  .fish-face .nick{font-size:19px !important}
+
+  /* 内嵌小卡（服务行/词条）降一档，形成 卡片 > 内嵌 的两层，不再卡片套卡片 */
+  .svc{background:rgba(10,16,38,.5) !important;border:1px solid rgba(132,158,225,.08)}
+
+  /* ---- B站列表收进固定高度（2026-11-08）：它原来把页面拉成三屏长 ---- */
+  #biliDailyList{max-height:392px;overflow-y:auto;padding-right:6px;scrollbar-width:thin}
+  #biliDailyList::-webkit-scrollbar{width:6px}
+  #biliDailyList::-webkit-scrollbar-thumb{background:rgba(132,158,225,.22);border-radius:3px}
+  #biliDailyList::-webkit-scrollbar-track{background:transparent}
+
+  /* ================= 主次分明（2026-11-08 A 方案） ================= */
+  /* 目标：打开第一眼看到「她状态怎么样」，细节往下找。只改视觉权重，不动数据。 */
+
+  /* ① 三栏收一点，给中间让空间 */
+  .hero{grid-template-columns:210px 1fr 320px !important;gap:22px !important;align-items:start !important}
+
+  /* ② 好感度：名字小、数字大，一眼就是焦点 */
+  .bar.aff.thin .row{align-items:baseline;margin-bottom:2px !important;justify-content:flex-start !important;gap:14px}
+  .bar.aff.thin .row .name{font-size:12.5px !important;color:var(--sub) !important;font-weight:500 !important;letter-spacing:.3px}
+  .bar.aff.thin .row .val{
+    font-size:38px !important;line-height:1 !important;font-weight:800 !important;
+    letter-spacing:-1px;color:#fff;
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 0 24px rgba(244,114,182,.35);
+  }
+  .bar.aff.thin .track{height:9px !important;border-radius:5px !important;margin-top:9px}
+  .bar.aff.thin .track>i{border-radius:5px}
+
+  /* ③ 身体/精神：整块压低存在感，让好感度冒出来 */
+  .need-cols{margin-top:16px}
+  .need-h{font-size:12.5px !important;opacity:.85}
+  .ni-top b{font-size:15px !important}
+
+  /* ④ 情绪：百分比也放大（它是「她现在怎么样」的另一半） */
+  .emo-now b,.emo-now strong{font-size:26px !important;line-height:1.1;letter-spacing:-.5px}
+
+  /* ⑤ 头像区：名字不再抢戏 */
+  .fish-face .nick{font-size:16px !important;font-weight:700}
+  .fish-face .tagline{font-size:12px !important;margin-top:4px !important}
+  /* ================================================================= */
+
+  /* ================= 全息 HUD（2026-11-08 B 方案） ================= */
+  /* 层：body 渐变 < #fx 星云 < 网格 < 内容。网格要在星云之上才看得见。 */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(59,130,246,.085) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(59,130,246,.085) 1px,transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(circle at 50% 22%,#000 0%,rgba(0,0,0,.72) 46%,transparent 88%);
+    mask-image:radial-gradient(circle at 50% 8%,#000 0%,rgba(0,0,0,.55) 38%,transparent 76%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.020) 0 1px,transparent 1px 3px);
+    opacity:.68;
+  }
+  .wrap{z-index:2 !important}
+
+  /* 卡片四角 L 形角标（只做左上 + 右下，四角会太满） */
+  .hero,section.card{position:relative}
+  .hero::before,.hero::after,section.card::before,section.card::after{
+    content:"";position:absolute;width:19px;height:19px;pointer-events:none;
+    border-color:rgba(59,130,246,.72);border-style:solid;
+  }
+  .hero::before,section.card::before{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px;border-radius:12px 0 0 0}
+  .hero::after,section.card::after{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0;border-radius:0 0 12px 0}
+
+  /* 数字等宽 + 极轻发光，像读数 */
+  .bar.aff.thin .row .val,.ni-top b,.cnt,.num{letter-spacing:.4px}
+  .ni-top b{text-shadow:0 0 12px rgba(255,255,255,.12)}
+  .bar.aff.thin .row .val{text-shadow:0 0 26px rgba(244,114,182,.42) !important}
+
+  /* 卡内细横线也换成 HUD 的淡蓝 */
+  section.card h2{border-bottom-color:rgba(59,130,246,.14) !important}
+  /* ================================================================ */
+
+  /* ================= 环形（2026-11-08 大改） ================= */
+  .bar.aff.thin{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:136px;margin:0 auto 4px}
+  .bar.aff.thin .track{
+    width:136px !important;height:136px !important;border-radius:50% !important;
+    background:conic-gradient(var(--pink) calc(var(--p,0) * 1%),rgba(255,255,255,.075) 0) !important;
+    -webkit-mask:radial-gradient(circle,transparent 60%,#000 61%);
+    mask:radial-gradient(circle,transparent 60%,#000 61%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .bar.aff.thin .track>i{display:none !important}
+  .bar.aff.thin .row{
+    position:absolute;inset:0;margin:0 !important;gap:0 !important;
+    display:flex;align-items:center;justify-content:center !important;
+    pointer-events:none;
+  }
+  /* 544 行那条为「数字挪到名字旁」设的 flex-start 会继承进来，这里强制覆盖 */
+  .bar.aff.thin .row{justify-content:center !important}
+  .bar.aff.thin .row .name{display:none}
+  .bar.aff.thin .row .val{font-size:30px !important;letter-spacing:-1px;text-shadow:0 0 22px rgba(255,143,163,.5) !important}
+  .bar.aff.thin::after{content:"好感度";margin-top:10px;font-size:12px;color:var(--sub);letter-spacing:1px}
+  /* ========================================================= */
+
+  /* ==================================================================
+  /* 科幻 HUD（2026-11-08）：切角 + 等宽读数 + 刻度 + 扫描光带          */
+  /* 思路：科技感来自「信息怎么画」，不是来自颜色。                     */
+  /* ================================================================== */
+
+  /* ① 等宽数字：所有读数都像仪表盘读数，等宽才不会跳 */
+  .val,.ni-top b,.cnt,.num,.token-note,#tokenToday,#tokenTotal,.svc .lat,
+  .emo-hormones,.wheel-hole b,.bar .row .val{
+    font-family:'Consolas','JetBrains Mono','Cascadia Mono',ui-monospace,monospace !important;
+    font-feature-settings:'tnum' 1,'zero' 1;
+  }
+
+  /* ② 切角卡片：圆角 → polygon 切掉左上和右下两个角 */
+  .hero,section.card{
+    border-radius:0 !important;
+    clip-path:polygon(0 14px,14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
+    box-shadow:none !important;
+    border:1px solid rgba(59,130,246,.20) !important;
+    background:linear-gradient(180deg,rgba(10,20,33,.92) 0%,rgba(4,7,13,.90) 100%) !important;
+  }
+  /* 切角会把 ::before/::after 的角标裁掉，用 clip-path 之后关掉旧的 */
+  .hero::before,.hero::after,section.card::before,section.card::after{display:none !important}
+
+  /* ③ 标签：拉开字距，像仪表上的 FIELD NAME */
+  .need-h,.bar .row .name,.ni-cap,.card h2 .cnt{
+    letter-spacing:1.6px !important;text-transform:uppercase;
+    font-size:11px !important;font-weight:500 !important;
+  }
+  section.card h2{
+    letter-spacing:1px;font-size:14px !important;font-weight:600 !important;
+    border-bottom:1px solid rgba(59,130,246,.18) !important;
+    padding-bottom:9px;
+  }
+  section.card h2 .ico{filter:drop-shadow(0 0 6px rgba(59,130,246,.55))}
+
+  /* ④ 进度条加刻度线（每 10% 一道），读起来像有档位 */
+  .track,.ni-bar{
+    border-radius:2px !important;
+    background-image:repeating-linear-gradient(90deg,
+      rgba(0,0,0,.55) 0 1px,transparent 1px 10%) !important;
+    box-shadow:inset 0 0 0 1px rgba(59,130,246,.14);
+  }
+  .track>i,.ni-bar>i{border-radius:2px !important}
+
+  /* ⑤ 扫描光带：一条窄高光从上往下扫过整屏，8 秒一轮 */
+  body::after{
+    background:linear-gradient(180deg,
+      transparent 0%,
+      rgba(59,130,246,.055) 46%,
+      rgba(59,130,246,.10) 50%,
+      rgba(59,130,246,.055) 54%,
+      transparent 100%) !important;
+    background-size:100% 220px !important;
+    background-repeat:no-repeat !important;
+    animation:scanline 8s linear infinite !important;
+    opacity:1 !important;
+  }
+  @keyframes scanline{
+    0%{background-position:0 -240px}
+    100%{background-position:0 calc(100vh + 240px)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    body::after{animation:none !important}
+  }
+
+  /* ⑥ 环形也切角一点：加两层同心细环，像仪表 */
+  .bar.aff.thin .track{
+    box-shadow:0 0 0 1px rgba(59,130,246,.22),0 0 26px -6px rgba(255,143,163,.55) !important;
+  }
+  /* ================================================================== */
+
+  /* ---- 科幻 HUD 加强（2026-11-08 第二轮）---- */
+
+  /* 切角从 14px 加到 26px，一眼能看出来被切了 */
+  .hero,section.card{
+    clip-path:polygon(0 26px,26px 0,100% 0,100% calc(100% - 26px),calc(100% - 26px) 100%,0 100%) !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(59,130,246,.26),
+      inset 0 0 70px -34px rgba(59,130,246,.55) !important;
+    background:linear-gradient(180deg,rgba(10,20,33,.94) 0%,rgba(4,7,13,.92) 100%) !important;
+  }
+
+  /* 切角边上补两段亮线（充当被切掉那两条边的「刀口」） */
+  .hero,section.card{position:relative}
+  .hero>.cutmark,section.card>.cutmark{display:none}
+
+  /* 卡标题发光 */
+  section.card h2{
+    color:#dffaf5 !important;
+    text-shadow:0 0 14px rgba(59,130,246,.45);
+  }
+  section.card h2 .ico{filter:drop-shadow(0 0 8px rgba(59,130,246,.75)) !important}
+
+  /* 所有读数带一点辉光，像发光的屏 */
+  .ni-top b{
+    color:#eafffb !important;
+    text-shadow:0 0 10px rgba(59,130,246,.30);
+  }
+  .bar .row .val{color:#dffaf5;text-shadow:0 0 9px rgba(59,130,246,.28)}
+
+  /* 进度条：暗底 + 细刻度 + 端头亮点 */
+  .track>i,.ni-bar>i{
+    box-shadow:0 0 12px -2px currentColor;
+    filter:saturate(1.15);
+  }
+
+  /* 环：外圈再加一圈极细的装饰环 */
+  .bar.aff.thin .track{
+    outline:1px solid rgba(59,130,246,.18);
+    outline-offset:6px;
+  }
+
+  /* 顶部标题：加一道英文副标 + 发光线 */
+  .title h1{text-shadow:0 0 20px rgba(59,130,246,.35)}
+  .title h1 .fish{filter:drop-shadow(0 0 12px rgba(59,130,246,.85)) !important}
+
+  /* 页面顶上加一条「状态灯带」 */
+  body::before{
+    background-image:
+      linear-gradient(rgba(59,130,246,.10) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(59,130,246,.10) 1px,transparent 1px) !important;
+    background-size:44px 44px !important;
+  }
+  /* ---- 加强结束 ---- */
+
+  /* ==================================================================
+  /* 参考图风格（2026-11-08）：编号 // 区块名、细线直角、等宽、分类色   */
+  /* 来源：用户给的两张参考图 —— 科技感不来自渐变和圆角，来自「分区秩序」*/
+  /* ================================================================== */
+
+  /* ① 区块编号：01 // 身体 —— 用 CSS counter，不动 HTML */
+  body{counter-reset:blk}
+  section.card{counter-increment:blk}
+  section.card h2::before{
+    content:counter(blk,decimal-leading-zero) ' // ';
+    font-family:'Consolas','JetBrains Mono',ui-monospace,monospace;
+    font-size:11px;font-weight:400;color:rgba(96,165,250,.75);
+    letter-spacing:1px;margin-right:2px;
+  }
+
+  /* ② 卡片：去圆角、去切角、去阴影 → 极细直角框（参考图就是直角） */
+  .hero,section.card{
+    clip-path:none !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
+    border:1px solid rgba(96,165,250,.16) !important;
+    background:rgba(6,11,19,.72) !important;
+  }
+  /* 只留顶部一条高亮，像被选中的面板 */
+  .hero,section.card{position:relative}
+  .hero::before,section.card::before{
+    display:block !important;content:'' !important;position:absolute;
+    top:-1px;left:-1px;right:-1px;height:1px;
+    background:linear-gradient(90deg,rgba(96,165,250,.55),rgba(96,165,250,.06));
+    pointer-events:none;
+  }
+  .hero::after,section.card::after{display:none !important}
+
+  /* ③ 区块标题：小一号、大写、拉字距，像面板抬头 */
+  section.card h2{
+    font-size:12.5px !important;font-weight:600 !important;
+    letter-spacing:1.4px !important;text-transform:uppercase;
+    color:#cfe0f5 !important;text-shadow:none !important;
+    padding-bottom:8px;margin-bottom:11px !important;
+    border-bottom:1px solid rgba(96,165,250,.13) !important;
+  }
+  section.card h2 .ico{opacity:.75;filter:none !important;font-size:14px !important}
+
+  /* ④ 等宽：所有数值、时间、编号都用等宽 */
+  .val,.ni-top b,.cnt,.num,#tokenToday,#tokenTotal,.svc .lat,.emo-hormones,
+  .wheel-hole b,.token-note,.bar .row .val,#genTime,.build-tag{
+    font-family:'Consolas','JetBrains Mono','Cascadia Mono',ui-monospace,monospace !important;
+    font-feature-settings:'tnum' 1;letter-spacing:0 !important;
+  }
+
+  /* ⑤ 标签：小、灰、拉字距（参考图里全是这种做法） */
+  .need-h,.ni-cap,.bar .row .name,.emo-now-label{
+    font-size:11px !important;letter-spacing:1.4px !important;
+    color:rgba(142,164,196,.9) !important;font-weight:500 !important;
+    text-transform:uppercase;
+  }
+
+  /* ⑥ 进度条：不留圆角，改 2px 直角 + 细刻度 */
+  .track,.ni-bar{border-radius:0 !important;height:5px !important}
+  .ni-bar{height:4px !important}
+  .track>i,.ni-bar>i{border-radius:0 !important;box-shadow:none !important}
+
+  /* ⑦ 页头加 // 分隔，像参考图的 QIQI // X-RAY */
+  .title h1::after{
+    content:' // ONLINE';
+    font-family:'Consolas',monospace;font-size:10px;font-weight:400;
+    letter-spacing:2px;color:rgba(96,165,250,.6);vertical-align:super;
+  }
+  /* ================================================================== */
+
+  /* ---- 区块编号补全（2026-11-08）---- */
+  /* 参考图里每块都有 02 // 这种编号，上一版只给 section.card 加了，内嵌两块漏了 */
+  .need-col.body .need-h::before{content:'01 // ';font-family:'Consolas',monospace;font-size:10px;color:rgba(96,165,250,.7);letter-spacing:1px}
+  .need-col.mind .need-h::before{content:'02 // ';font-family:'Consolas',monospace;font-size:10px;color:rgba(96,165,250,.7);letter-spacing:1px}
+  /* 情绪区也加一个 */
+  .emo-now-label::before{content:'03 // ';font-family:'Consolas',monospace;font-size:10px;color:rgba(96,165,250,.7);letter-spacing:1px}
+  /* 好感度环下面那行 */
+  .bar.aff.thin::after{content:'00 // AFFINITY'}
+
+  /* ==================================================================
+  /* 雷达核心（2026-11-08）：头像改成扫描核心 —— 同心环 + 旋转刻度      */
+  /* 参考图中央那个 X-RAY 人形的做法：让「她」成为视觉中心，四周是读数   */
+  /* ================================================================== */
+
+  .fish-face{position:relative;padding:26px 0 8px}
+  .fish-face .avatar{
+    position:relative;z-index:3;
+    box-shadow:
+      0 0 46px -10px rgba(59,130,246,.75),
+      0 0 0 1px rgba(96,165,250,.45),
+      inset 0 0 30px -10px rgba(96,165,250,.45) !important;
+    border:1px solid rgba(96,165,250,.45) !important;
+  }
+
+  /* 外圈同心环 */
+  .fish-face::before{
+    content:'';position:absolute;left:50%;top:50%;
+    width:214px;height:214px;margin:-107px 0 0 -107px;
+    border-radius:50%;
+    border:1px solid rgba(96,165,250,.20);
+    box-shadow:
+      0 0 0 14px rgba(96,165,250,.045),
+      0 0 0 15px rgba(96,165,250,.10),
+      0 0 0 34px rgba(96,165,250,.030);
+    pointer-events:none;z-index:1;
+  }
+
+  /* 旋转刻度盘：一圈 1 度细线，每 12 度一条，只留最外环 */
+  .fish-face::after{
+    content:'';position:absolute;left:50%;top:50%;
+    width:214px;height:214px;margin:-107px 0 0 -107px;
+    border-radius:50%;
+    background:repeating-conic-gradient(
+      rgba(96,165,250,.55) 0deg 0.8deg, transparent 0.8deg 12deg);
+    -webkit-mask:radial-gradient(circle,transparent 100px,#000 101px,#000 106px,transparent 107px);
+    mask:radial-gradient(circle,transparent 100px,#000 101px,#000 106px,transparent 107px);
+    animation:radarspin 26s linear infinite;
+    pointer-events:none;z-index:2;
+  }
+  @keyframes radarspin{to{transform:rotate(360deg)}}
+
+  /* 扫描扇：一道青色扇形绕着转（用 mask 削成环带内） */
+  .fish-face .tagline,.fish-face .nick{position:relative;z-index:4}
+  .fish-face .mood-chip{position:relative;z-index:4}
+
+  /* 名字下面加一行编号，像参考图的 QIQI // X-RAY */
+  .fish-face .nick::after{
+    content:' // CORE';
+    font-family:'Consolas',monospace;font-size:9px;font-weight:400;
+    letter-spacing:2px;color:rgba(96,165,250,.55);vertical-align:super;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .fish-face::after{animation:none}
+  }
+  /* ================================================================== */
+
+  /* ---- 环心对齐头像（2026-11-08）---- */
+  /* 原来 top:50% 是相对整个 .fish-face（含名字），环跑到名字上。
+     头像 150px、容器上下 padding 26px → 头像中心在 top:101px */
+  .fish-face::before,.fish-face::after{
+    top:101px !important;
+    width:196px !important;height:196px !important;
+    margin:-98px 0 0 -98px !important;
+  }
+  .fish-face::after{
+    -webkit-mask:radial-gradient(circle,transparent 92px,#000 93px,#000 97px,transparent 98px) !important;
+    mask:radial-gradient(circle,transparent 92px,#000 93px,#000 97px,transparent 98px) !important;
+  }
+  .fish-face{padding:26px 0 14px !important}
+
+  /* ==================================================================
+  /* 环绕模块（2026-11-08）：抄参考图的 X-RAY 布局                      */
+  /* 立绘在中心，六个胶囊围一圈，细线连到中心 + 一道定位环              */
+  /* ================================================================== */
+
+  /* 第一栏加宽，才放得下环 */
+  .hero{grid-template-columns:420px 1fr 320px !important}
+
+  .fish-face{position:relative;min-height:430px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+  /* 环绕层：铺满整个头像区，不挡点击 */
+  .orbit{
+    position:absolute;left:50%;top:101px;width:460px;height:400px;
+    transform:translate(-50%,-200px);pointer-events:none;z-index:5;
+  }
+  .orbit svg.wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .orbit svg.wires line{stroke:rgba(96,165,250,.30);stroke-width:1}
+  .orbit svg.wires circle{fill:none;stroke:rgba(96,165,250,.13);stroke-width:1;stroke-dasharray:2 5}
+
+  /* 胶囊：小、直、带一个呼吸点 */
+  .orbit .node{
+    position:absolute;display:flex;align-items:center;gap:6px;
+    padding:5px 9px;background:rgba(4,7,13,.88);
+    border:1px solid rgba(96,165,250,.28);border-radius:0;
+    font-family:'Consolas','JetBrains Mono',ui-monospace,monospace;
+    white-space:nowrap;backdrop-filter:blur(3px);
+  }
+  .orbit .node i{
+    width:5px;height:5px;border-radius:50%;background:var(--blue);flex:none;
+    box-shadow:0 0 7px rgba(59,130,246,.9);
+  }
+  .orbit .node b{font-size:10px;font-weight:500;letter-spacing:1.2px;color:rgba(142,164,196,.95);text-transform:uppercase}
+  .orbit .node em{font-style:normal;font-size:12px;font-weight:700;color:#dff0ff;letter-spacing:0}
+
+  /* 六个位置 */
+  .orbit .n1{left:6px;top:34px}
+  .orbit .n2{right:6px;top:34px}
+  .orbit .n3{left:-6px;top:50%;transform:translateY(-50%)}
+  .orbit .n4{right:-6px;top:50%;transform:translateY(-50%)}
+  .orbit .n5{left:6px;bottom:34px}
+  .orbit .n6{right:6px;bottom:34px}
+
+  /* 头像抬到线上面 */
+  .fish-face .avatar,.fish-face .avatar-fallback{position:relative;z-index:6}
+  .fish-face .nick,.fish-face .tagline,.fish-face .mood-chip{position:relative;z-index:6}
+
+  /* 窄屏：胶囊太挤就藏起来 */
+  @media (max-width:1100px){.orbit{display:none}}
+  /* ================================================================== */
 </style>
 </head>
 <body>
@@ -548,6 +1003,24 @@
       <div class="nick">示例角色</div>
       <div class="tagline" id="tagLine">—</div>
       <div class="mood-chip" id="moodChip">—</div>
+      <!-- 2026-11-08 环绕模块：抄参考图的 X-RAY 布局，数据接我们自己的 -->
+      <div class="orbit" aria-hidden="true">
+        <svg class="wires" viewBox="0 0 460 400" preserveAspectRatio="xMidYMid meet">
+          <line x1="230" y1="200" x2="46"  y2="46"/>
+          <line x1="230" y1="200" x2="414" y2="46"/>
+          <line x1="230" y1="200" x2="46"  y2="200"/>
+          <line x1="230" y1="200" x2="414" y2="200"/>
+          <line x1="230" y1="200" x2="46"  y2="354"/>
+          <line x1="230" y1="200" x2="414" y2="354"/>
+          <circle cx="230" cy="200" r="118"/>
+        </svg>
+        <div class="node n1"><i></i><b>好感</b><em data-bind="affVal">—</em></div>
+        <div class="node n2"><i></i><b>情绪</b><em data-bind="emoTop">—</em></div>
+        <div class="node n3"><i></i><b>饱食</b><em data-bind="hungerVal">—</em></div>
+        <div class="node n4"><i></i><b>精力</b><em data-bind="energyVal">—</em></div>
+        <div class="node n5"><i></i><b>归属</b><em data-bind="belVal">—</em></div>
+        <div class="node n6"><i></i><b>自尊</b><em data-bind="selfVal">—</em></div>
+      </div>
     </div>
     <div class="bars">
       <!-- 2026-11-07 重排：原来四条横条长得一模一样，读不出轻重。
@@ -828,7 +1301,7 @@
   const n = v => (v == null || isNaN(Number(v))) ? "—" : Number(v);
   const pct = v => { v = n(v); return isNaN(v) ? 0 : Math.max(0, Math.min(100, v)); };
 
-  function bar(id, v){ $(id).style.width = pct(v) + "%"; }
+  function bar(id, v){ var p = pct(v); var el = $(id); el.style.width = p + "%"; try{ if(el.parentElement) el.parentElement.style.setProperty("--p", p); }catch(e){} }
 
   function renderServices(svcs){
     const list = $("svcList"); list.innerHTML = "";
@@ -1991,7 +2464,7 @@
         (d.commits||[]).forEach(c=>{
           const li = document.createElement('li');
           li.style.cursor = 'pointer';
-          li.innerHTML = `<span style="opacity:.55;font-size:11.5px;margin-right:8px">${esc(c.time)}</span>`
+          li.innerHTML = `<span style="opacity:.55;font-size:12px;margin-right:8px">${esc(c.time)}</span>`
                        + `<span style="font-family:Consolas,monospace;opacity:.7;margin-right:6px">${esc(c.hash)}</span>`
                        + esc(c.msg);
           li.onclick = ()=> showDiff(c.hash);
@@ -2167,9 +2640,9 @@
               padding:5px 8px;font-size:12px;max-width:340px"></select>
       <span id="specClose" style="cursor:pointer;color:#8b8ba3;font-size:20px;line-height:1">×</span>
     </div>
-    <div style="font-size:11px;color:#6f6f8a;margin-bottom:6px">Mel 声谱 · 横轴时间，纵轴频率，越亮能量越强</div>
+    <div style="font-size:12px;color:#6f6f8a;margin-bottom:6px">Mel 声谱 · 横轴时间，纵轴频率，越亮能量越强</div>
     <img id="specImg" alt="声谱" style="width:100%;border-radius:10px;display:block;background:#08080e;min-height:120px">
-    <div style="font-size:11px;color:#6f6f8a;margin:14px 0 6px">波形 · 横轴时间，纵轴振幅</div>
+    <div style="font-size:12px;color:#6f6f8a;margin:14px 0 6px">波形 · 横轴时间，纵轴振幅</div>
     <img id="waveImg" alt="波形" style="width:100%;border-radius:10px;display:block;background:#08080e;min-height:60px">
   </div>
 </div>
@@ -2205,7 +2678,45 @@
   pick.onchange=function(){ show(pick.value); };
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') modal.style.display='none'; });
 })();
-</script>
+
+/* 2026-11-08 卡片跟手倾斜：鼠标在卡片上时轻微跟随，最多 4 度 */
+(function cardTilt(){
+  try{
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if(matchMedia('(hover: none)').matches) return;          // 触屏不倾斜
+    var MAX = 4;
+    document.querySelectorAll('.card').forEach(function(card){
+      card.addEventListener('mousemove', function(e){
+        if(card.classList.contains('dragging')) return;
+        var r = card.getBoundingClientRect();
+        var dx = (e.clientX - r.left) / r.width  - 0.5;
+        var dy = (e.clientY - r.top ) / r.height - 0.5;
+        card.classList.add('tilting');
+        card.style.transform = 'perspective(900px) rotateX(' + (-dy*MAX).toFixed(2) + 'deg) rotateY(' + (dx*MAX).toFixed(2) + 'deg)';
+      });
+      card.addEventListener('mouseleave', function(){
+        card.classList.remove('tilting');
+        card.style.transform = '';
+      });
+    });
+  }catch(err){ console.warn('cardTilt:', err); }
+})();
+
+/* 2026-11-08 orbit 数据同步：把主面板的数值抄进环绕胶囊 */
+(function orbitSync(){
+  function sync(){
+    try{
+      document.querySelectorAll('.orbit .node em[data-bind]').forEach(function(em){
+        var src = document.getElementById(em.getAttribute('data-bind'));
+        if(!src) return;
+        var t = (src.textContent || '').trim();
+        if(t && t !== em.textContent) em.textContent = t;
+      });
+    }catch(e){ console.warn('orbitSync:', e); }
+  }
+  sync();
+  setInterval(sync, 2000);
+})();</script>
 
 </body>
 </html>

@@ -728,6 +728,7 @@ def _archive_block(data: dict[str, Any], scope: str) -> dict[str, Any]:
         "pending": len(pending),
         "recent": [
             {"subject": str(it.get("subject") or ""), "fact": str(it.get("fact") or ""),
+             "ev": str(it.get("ev") or ""),
              "time": str(it.get("time") or ""), "src": str(it.get("src") or ""),
              "kind": str(it.get("kind") or ""), "expired": not _live(it)}
             for it in facts if isinstance(it, dict) and it.get("fact")
@@ -1296,8 +1297,19 @@ def aggregate_emotion() -> dict[str, Any]:
     except Exception:  # noqa: BLE001
         data["hormones"] = {}
     values = data.get("values") or {}
-    order = ["开心", "害羞", "烦", "怒", "丧", "累", "害怕"]
-    base = {"开心": 31.6, "害羞": 8.4, "烦": 10.5, "怒": 10.5, "丧": 7.4, "累": 26.3, "害怕": 5.3}
+    order = ["开心", "害羞", "情欲", "烦", "怒", "丧", "累", "害怕"]
+    base = {"开心": 31.6, "害羞": 8.4, "情欲": 50.0, "烦": 10.5,
+            "怒": 10.5, "丧": 7.4, "累": 26.3, "害怕": 5.3}
+    # 2026-11-08：「情欲」不在 emotion_state.json 里，是 derive_emotions 现算的（由 OXY/DA 推）。
+    # 面板要显示它，所以这里补一次实时值。
+    try:
+        from plugins import hormones as _hm
+        _aro = (_hm.derive_emotions() or {}).get("情欲")
+        if _aro is not None:
+            values = dict(values)
+            values["情欲"] = float(_aro)
+    except Exception:  # noqa: BLE001
+        pass
     vals = {k: float(values.get(k) if values.get(k) is not None else base[k]) for k in order}
     if sum(vals.values()) <= 0:
         vals = dict(base)
@@ -1990,11 +2002,11 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         has_v = "v=" in self.path
         if path in ("/", "/index.html"):
-            # 没有版本参数就先重定向到 ?v=<index.html 修改时间>：
-            # 浏览器会缓存渲染结果，URL 不变就可能一直是旧页面（"启动后还是旧网站"就是这个）。
+            # 2026-11-08：默认页换成 X-RAY 新版（scifi.html）。
+            # 旧面板保留在 /legacy，随时能回退。
             if not has_v:
                 try:
-                    stamp = int((STATIC_DIR / "index.html").stat().st_mtime)
+                    stamp = int((STATIC_DIR / "scifi.html").stat().st_mtime)
                 except Exception:  # noqa: BLE001
                     stamp = 0
                 self.send_response(302)
@@ -2002,6 +2014,23 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Cache-Control", "no-store")
                 self.end_headers()
                 return
+            self._send_file(STATIC_DIR / "scifi.html", "text/html; charset=utf-8")
+        elif path in ("/xray", "/xray.html"):
+            # 别名，等价于 /
+            stamp = 0
+            try:
+                stamp = int((STATIC_DIR / "scifi.html").stat().st_mtime)
+            except Exception:  # noqa: BLE001
+                pass
+            if not has_v:
+                self.send_response(302)
+                self.send_header("Location", f"/?v={stamp}")
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                return
+            self._send_file(STATIC_DIR / "scifi.html", "text/html; charset=utf-8")
+        elif path in ("/legacy", "/legacy.html", "/old"):
+            # 旧面板（2721 行的那个），留着回退用
             self._send_file(STATIC_DIR / "index.html", "text/html; charset=utf-8")
         elif path == "/api/voice/list":
             try:
