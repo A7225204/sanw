@@ -168,6 +168,9 @@ copy persona.example.md persona.md
 
 然后编辑 `persona.md`，把里面的角色名和设定改成你的。
 
+**注意**：`.env` 里的 `BOT_NICKNAME` 要和 `persona.md` 里的名字**完全一致**，
+否则启动时报「persona.md 里没有出现昵称 X」。改完 persona 记得同步改这里。
+
 **其他都不用动**。激素、记忆、人格进化这些是机制，跟角色是谁无关。
 
 `persona.example.md` 里那份写得很完整（短句、有脾气、不用敬语、动作括号偶尔用），
